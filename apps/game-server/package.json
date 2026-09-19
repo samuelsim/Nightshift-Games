@@ -1,0 +1,32 @@
+{
+  "name": "@nightshift/game-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc -b tsconfig.json",
+    "start": "tsx dist/main.js",
+    "test": "tsx --test src/rooms/room-policy.test.ts src/rooms/nightshift-room.smoke.test.ts",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@nightshift/game-core": "workspace:*",
+    "@nightshift/games-registry": "workspace:*",
+    "@nightshift/protocol": "workspace:*",
+    "@colyseus/core": "^0.17.0",
+    "@colyseus/ws-transport": "^0.17.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7",
+    "tsx": "^4.23.13",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@colyseus/sdk": "^0.17.0",
+    "typescript": "^5.9.0"
+  }
+}

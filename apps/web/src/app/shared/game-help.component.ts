@@ -1,0 +1,44 @@
+import { Component, computed, input } from '@angular/core';
+
+const quickTips: Record<string,string> = {
+ 'estimate':'Estimate the amount in 30 seconds. Closer guesses score more. Play 5 rounds.',
+ 'pick-number':'Pick 1–10. Closest to the hidden target wins. Play 3 rounds.',
+ 'pick-number-solo':'Find the hidden number in 20 seconds. You get 3 guesses and higher/lower hints.',
+ 'human-exe':'Check your secret role. Pick the most human or machine-like answer. Play 5 rounds.',
+ 'human-exe-solo':'Match one HUMAN and one MACHINE answer, then lock your pair within 15 seconds.',
+ 'restricted-clues':'Give one-word clues without using forbidden words. Everyone else races to guess.',
+ 'human-infiltrator':'Write an answer, discuss, then vote for the hidden machine. Machines must use their secret word.',
+ 'majority-rules':'Choose A or B, then predict everyone else’s majority. Submit both in 30 seconds.',
+ 'one-of-us':'Give a short clue, discuss, then vote for the bluffer who never saw the word.'
+};
+const rules: Record<string,{name:string;steps:string[];scoring:string}> = {
+  'human-infiltrator':{name:'Human.exe: Infiltrator',steps:['3–8 players, three rounds. Everyone writes a 3–160 character response within 30 seconds. One hidden machine must include a private secret word.','Responses appear shuffled and anonymous. Read and discuss aloud for 20 seconds, using card letters instead of names.','Vote for another response within 20 seconds. Only players who answered can vote. Authors, ballots and the machine are revealed together.'],scoring:'Catch the machine: correct human voters earn 100. Otherwise the machine earns 200; tied votes make no accusation. Missing machine response, fewer than three answers/connected players, permanent machine departure, or no ballots voids the round. Late arrivals join next round.'},
+  'pick-number-solo':{name:'Pick a Number · Solo hunt',steps:['Find a fixed secret number from 1–10 in three guesses and 20 seconds.','Each miss tells you to go higher or lower. Repeated guesses are not allowed.','Play three rounds. New players join the action next round with multiplayer rules.'],scoring:'An exact hit earns 100, 60 or 30 points on guess one, two or three. No hit means no points.'},
+  'human-exe-solo':{name:'Human.exe · Dual-core',steps:['Choose both the HUMAN and MACHINE responses within 15 seconds. Choose two different answers.','Answer positions shuffle. Ignore the decoys and lock your pair to reveal the authored answers. Play five rounds.','New players join the action next round with multiplayer rules.'],scoring:'100 points per correct match. Get both right for 10 extra points per full second remaining. Unsubmitted pairs earn zero.'},
+  'estimate': {name:'Estimate',steps:['The host chooses Quantities, Mixed Trivia, Space Facts, Earth & Ocean or Wildlife and Easy, Standard or Hard in the lobby. Difficulty changes the questions, not the timer or scoring.','Enter an estimate in the displayed units within 30 seconds. Decimals are allowed. Missing the deadline earns no points and breaks your streak.','Compare guesses at reveal. Each factual topic includes a source and rounded reference value after answers lock. Fresh shuffle uses unseen questions first in this room; Mixed Trivia combines all factual topics. Five rounds; records are separate for each deck and difficulty.','Daily mode shares the same set for each deck/difficulty, resetting at 00:00 UTC. A started run keeps its date. Replays preserve your first completed score and update your daily best in this browser.'],scoring:'Up to 1,000 accuracy points. Each 1% error costs 10 points. Consecutive guesses within 10% add 100 bonus points per streak step, up to 300.'},
+  'pick-number': {name:'Pick a Number',steps:['Pick one number from 1 to 10. Your choice locks immediately.','The server reveals a random target. Play three rounds.'],scoring:'Closest guesses earn 5 points; an exact hit earns 8. Tied winners share the win and each earn points.'},
+  'restricted-clues': {name:'Restricted Clues',steps:['The clue giver sees a secret word and two forbidden words. Send up to six one-word clues.','Everyone else guesses the word within 60 seconds. Wrong guesses can be retried.','Avoid the answer, forbidden words, fragments, rhymes and spelling hints. The giver rotates across four rounds.'],scoring:'The first correct guess earns both the guesser and clue giver 100 points.'},
+  'human-exe': {name:'Human.exe',steps:['Check your private HUMAN or MACHINE directive each round.','Choose the answer that fits: warmth and empathy for HUMAN, measurement and structured logic for MACHINE.','Answer positions shuffle. These are playful authored answers; ignore the decoys. See the explanation at reveal; play five rounds.'],scoring:'Match your directive’s answer for 100 points. Your role stays private until reveal.'},
+  'majority-rules': {name:'Majority Rules',steps:['Choose your own A/B answer, then predict everyone else’s majority. Submit both within 30 seconds.','Your own answer is excluded from your prediction. Predict TIE if the other answers will split evenly; with two players, choose A or B.','Five rounds. Answers and predictions stay hidden until reveal.'],scoring:'A correct prediction earns 100 points. No other submitted answers means no score.'},
+  'one-of-us': {name:'One of Us Is Lying',steps:['One player gets only a category; everyone else gets the same secret word.','Give a 1–3 word clue in 30 seconds without saying the word. The bluffer tries to blend in.','Discuss for 30 seconds, then vote for another player within 20 seconds. Play three rounds.'],scoring:'When the room catches the bluffer, correct voters earn 100 points. An uncaught bluffer earns 200. Tied or empty votes mean no accusation.'}
+};
+
+@Component({selector:'ns-game-help',standalone:true,template:`
+  @if (guide(); as guide) {
+    <details #help class="game-help" (keydown.escape)="help.open = false">
+      <summary>ⓘ How to play</summary>
+      <div class="help-sheet"><h2>{{ guide.name }} · TL;DR</h2>
+        <p class="quick-tip">{{ quickTip() }}</p><details><summary>Full rules &amp; scoring</summary><ol>@for (step of guide.steps; track step) { <li>{{ step }}</li> }</ol>
+        <p><strong>Scoring:</strong> {{ guide.scoring }}</p></details>
+        <small>Timer keeps running. Tap the heading or press Escape to close.</small>
+      </div>
+    </details>
+  }
+`,styles:[`
+  :host{position:fixed;right:max(1rem,env(safe-area-inset-right));top:4.5rem;z-index:80}
+  summary{list-style:none;cursor:pointer;width:max-content;margin-left:auto;border:1px solid var(--cyan);border-radius:99px;background:#202020;color:var(--text);padding:.6rem .85rem;font-size:.8rem;font-weight:800;box-shadow:0 3px 14px #0004}summary::-webkit-details-marker{display:none}
+  .help-sheet{width:min(360px,calc(100vw - 3rem));max-height:calc(100dvh - 9rem);overflow:auto;padding:1.2rem;margin-top:.6rem;background:#242422;border:1px solid var(--line);border-radius:16px;box-shadow:0 15px 60px #0008}
+  .quick-tip{font-size:1rem;color:var(--text)}.help-sheet summary{border:0;box-shadow:none;border-radius:6px;padding:.6rem 0;margin:0;background:transparent;font-size:.85rem}.help-sheet small{margin-top:.7rem}
+  h2{font-size:1.1rem;margin:0 0 1rem}ol{padding-left:1.2rem;margin:0}li,p{font-size:.85rem;line-height:1.6}li+li{margin-top:.6rem}small{display:block;color:var(--muted);font-size:.75rem;line-height:1.5}
+`]})
+export class GameHelpComponent { readonly quickTip = computed(()=>quickTips[this.gameId()+(this.solo()?'-solo':'')] ?? quickTips[this.gameId()]); readonly gameId = input.required<string>(); readonly solo = input(false); readonly guide = computed(()=>rules[this.gameId()+(this.solo()?'-solo':'')] ?? rules[this.gameId()]); }

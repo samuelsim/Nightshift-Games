@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: nightshift-games
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npx --yes pnpm@11.7.0 install --frozen-lockfile --prod=false && npx --yes pnpm@11.7.0 build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '24'

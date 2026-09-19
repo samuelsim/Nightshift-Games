@@ -1,0 +1,17 @@
+{
+  "name": "Nightshift Games",
+  "short_name": "Nightshift",
+  "theme_color": "#141414",
+  "background_color": "#141414",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

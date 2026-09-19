@@ -1,0 +1,30 @@
+{
+  "name": "@nightshift/games-human-exe",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "test": "tsx --test src/lib/game.test.ts",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@nightshift/game-core": "workspace:*",
+    "@nightshift/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.0"
+  }
+}
+
+
