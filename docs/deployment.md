@@ -41,4 +41,16 @@ for Angular and 2567 for Colyseus via `pnpm dev`.
 Verified locally: production build, root/room/invite HTTP routes, health endpoint,
 missing-asset 404, and two browser players creating/joining/starting a multiplayer game.
 The production browser bundle no longer points to `ws://localhost:2567`.
-Public Render deployment remains pending account/repository connection.
+Live site: https://nightshift-games.onrender.com/ — verified with two players over HTTPS.
+
+## Keep-awake requests
+
+The `Keep Nightshift awake` GitHub Actions workflow requests `/health` every five minutes
+from GitHub's cloud runners. It also runs when its workflow file changes and can be run
+manually from the repository's Actions tab. No checkout, secrets or local computer needed.
+It retries transient failures and checks the health response, not just HTTP availability.
+
+This is best-effort: GitHub can delay/drop scheduled runs and disables public-repository
+schedules after 60 days without repository activity. If development pauses that long,
+re-enable the workflow in Actions. Render quotas and platform restarts still apply.
+Disable the workflow in Actions to stop these requests.
