@@ -1,3 +1,5 @@
+import { quickTips } from '../shared/game-guides';
+import { gameCatalog } from '@nightshift/games-registry/catalog';
 import { PersonalStatsComponent } from '../shared/personal-stats.component';
 import { Component, inject, signal } from '@angular/core';
 import { GameArtComponent } from '../shared/game-art.component';
@@ -29,7 +31,7 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
         </label>
 
         <label>
-          Room code (to join)
+          Room code
           <input [(ngModel)]="roomCode" maxlength="5" autocapitalize="characters" placeholder="K7F2Q" />
         </label>
 
@@ -42,11 +44,11 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
         <div class="actions">
           <button type="button" class="primary" [disabled]="busy()" (click)="createRoom()">
             <lucide-icon [img]="Plus" aria-hidden="true" />
-            <span>Create Game</span>
+            <span>Create Room</span>
           </button>
           <button type="button" [disabled]="busy() || !roomCode.trim()" (click)="joinRoom()">
             <lucide-icon [img]="LogIn" aria-hidden="true" />
-            <span>Join</span>
+            <span>Join Room</span>
           </button>
         </div>
       </section>
@@ -57,10 +59,16 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
           <button type="button" class="primary" [disabled]="busy()" (click)="createRoom(true)">Play daily Estimate</button>
         </div>
       </section>
-      <details class="home-disclosure"><summary>Explore all 7 games</summary><section class="arcade-shelf" aria-label="Games in the arcade">
+      <details class="home-disclosure"><summary>Explore games · How to play</summary><section class="arcade-shelf" aria-label="Games in the arcade">
         
         @for (game of artGames; track game.id) {
-          <figure class="shelf-game" [attr.data-game]="game.id"><ns-game-art [game]="game.id" /><figcaption>{{ game.name }}</figcaption></figure>
+          <details class="shelf-game" name="game-preview" [attr.data-game]="game.id">
+            <summary><ns-game-art [game]="game.id" /><span class="preview-title">{{ game.name }}</span><span class="preview-meta">{{ game.minPlayers }}–{{ game.maxPlayers }} players · How to play</span></summary>
+            <div class="preview-rules">
+              <p>{{ tips[game.id] }}</p>
+              @if (tips[game.id + '-solo']; as soloTip) { <p><strong>Solo:</strong> {{ soloTip }}</p> }
+            </div>
+          </details>
         }
       </section>
       </details>
@@ -69,6 +77,19 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
   `,
   styles: [
     `
+      .arcade-shelf { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; }
+      .shelf-game { border:1px solid var(--line); border-radius:12px; background:var(--surface); overflow:hidden; }
+      .shelf-game summary { display:grid; grid-template-columns:56px minmax(0,1fr); gap:.3rem .75rem; align-items:center; padding:.8rem; cursor:pointer; list-style:none; }
+      .shelf-game summary::-webkit-details-marker { display:none; }
+      .shelf-game summary:hover, .shelf-game[open] summary { background:var(--surface-strong); }
+      .shelf-game[open] { border-color:var(--gold); }
+      .shelf-game ns-game-art { grid-row:1/3; padding:0; border-radius:10px; }
+      .preview-title { font-size:.95rem; font-weight:800; }
+      .preview-meta { font-size:.75rem; color:var(--muted); }
+      .preview-rules { padding:0 .85rem .85rem; }
+      .preview-rules p { font-size:.85rem; line-height:1.5; margin:.6rem 0 0; }
+      @media(max-width:760px) { .arcade-shelf { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+      @media(max-width:540px) { .arcade-shelf { grid-template-columns:minmax(0,1fr); } }
       .home-shell {
         display: grid;
         min-height: calc(100dvh - 64px);
@@ -155,7 +176,7 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
 
       .actions {
         display: grid;
-        grid-template-columns: 1fr auto;
+        grid-template-columns: 1fr 1fr;
         gap: 0.65rem;
       }
 
@@ -185,6 +206,11 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
         opacity: 0.55;
       }
 
+      @media (max-width:440px) {
+        .actions button { padding:0 .5rem; font-size:.9rem; white-space:nowrap; }
+        .actions lucide-icon { display:none; }
+      }
+
       .error {
         margin: 0;
         color: var(--danger);
@@ -201,7 +227,8 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
   ]
 })
 export class HomePageComponent {
-  protected readonly artGames = [{id:'estimate',name:'Estimate'},{id:'restricted-clues',name:'Restricted Clues'},{id:'human-exe',name:'Human.exe'},{id:'human-infiltrator',name:'Human.exe: Infiltrator'},{id:'majority-rules',name:'Majority Rules'},{id:'one-of-us',name:'One of Us Is Lying'},{id:'pick-number',name:'Pick a Number'}];
+  protected readonly artGames = gameCatalog;
+  protected readonly tips = quickTips;
   protected readonly client = inject(GameClientService);
   private readonly router = inject(Router);
   protected readonly Moon = Moon;
