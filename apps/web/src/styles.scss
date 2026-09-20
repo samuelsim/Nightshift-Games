@@ -289,3 +289,8 @@ input, select { font-size:max(1rem, 16px); }
 
 @media(min-width:1000px) { .game-library .game-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 .selected-description { color:var(--muted); font-size:.85rem; line-height:1.4; }
+
+/* One compact audio menu on phones; music and effects keep independent preferences. */
+.audio-menu{position:relative}.audio-menu>summary{list-style:none;font-weight:700}.audio-menu>summary::-webkit-details-marker{display:none}
+.audio-panel{position:absolute;right:0;top:calc(100% + .5rem);width:min(280px,calc(100vw - 2rem));display:grid;grid-template-columns:1fr 1fr;gap:.7rem;padding:1rem;background:#242422;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 35px #0008;z-index:120}
+.music-title,.music-volume,.audio-panel>small{grid-column:1/-1}.music-title{font-size:.85rem;color:var(--gold);margin:0;font-weight:800}.music-volume{display:grid;gap:.3rem;font-size:.8rem;color:var(--muted)}.music-volume input{width:100%;min-height:32px;accent-color:var(--mint)}.audio-panel>small{font-size:.75rem;color:var(--muted)}.audio-panel .sound-toggle{justify-content:center}.audio-panel>.sound-toggle:first-of-type{grid-column:1/-1}

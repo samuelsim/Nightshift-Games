@@ -12,6 +12,7 @@ const notes: Record<Cue, readonly number[]> = {
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
+  onCue: ((cue:Cue)=>void) | undefined;
   gameId: string | null = null;
   readonly audioStatus = signal('');
   readonly soundOn = signal(this.readPreference());
@@ -80,6 +81,7 @@ export class FeedbackService {
     // Suppress overlapping taps; important game cues can still replace a recent tap.
     if (cue === 'tap' && performance.now() - this.lastPlayed < 100) return;
     this.lastPlayed = performance.now();
+    this.onCue?.(cue);
     const palette = soundPalette(this.gameId);
     const alarm = cue === 'hurry' || cue === 'urgent' || cue === 'timeup' || cue === 'tick';
     const melody = cue === 'correct' || cue === 'finish' ? palette.victory : notes[cue];
