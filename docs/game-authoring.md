@@ -51,3 +51,8 @@ with guests, Use defaults resets settings first and allows guests to ready again
 
 Custom round counts and Human.exe Easy scores use separate personal-record modes. Default
 records and daily identities remain compatible with prior versions.
+
+For a game with a finite deck, use `freshHand` with `context.previousContent` and expose
+a server-only `replayKey(state)` for the current card. The room records only cards actually
+shown and passes the appropriate history to each new game. Never put that history or
+secret replay identities in public views. See `replayability-2026-09-20.md` for details.

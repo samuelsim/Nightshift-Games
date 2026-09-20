@@ -1,3 +1,4 @@
+import { QuickStartInfoComponent } from '../shared/quick-start-info.component';
 import { GameSettingsComponent } from '../shared/game-settings.component';
 import { defaultGameOptions, effectiveGameOptions, type GameOptions } from '@nightshift/protocol/room';
 import { InfiltratorComponent } from '../games/human-exe/infiltrator.component';
@@ -28,7 +29,7 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
 @Component({
   selector: 'ns-room-page',
   standalone: true,
-  imports: [GameSettingsComponent,InfiltratorComponent, HostStatusComponent, FormsModule, AvatarPickerComponent, PlayerListComponent, PickNumberComponent, EstimateComponent, RestrictedCluesComponent, HumanExeComponent, MajorityRulesComponent, OneOfUsComponent, NextGameComponent, RoundStatusComponent, LucideAngularModule, GameArtComponent, GameHelpComponent, RoundOutcomeComponent, GameStageComponent],
+  imports: [QuickStartInfoComponent,GameSettingsComponent,InfiltratorComponent, HostStatusComponent, FormsModule, AvatarPickerComponent, PlayerListComponent, PickNumberComponent, EstimateComponent, RestrictedCluesComponent, HumanExeComponent, MajorityRulesComponent, OneOfUsComponent, NextGameComponent, RoundStatusComponent, LucideAngularModule, GameArtComponent, GameHelpComponent, RoundOutcomeComponent, GameStageComponent],
   template: `
     <main class="room-shell">
       @if (!room()) {
@@ -105,6 +106,7 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
 
               <p class="selected-description">{{ selectedGameTagline() }}</p>
               <ns-game-settings [gameId]="room()?.selectedGameId || 'pick-number'" [options]="selectedOptions()" [isHost]="client.isHost()" (optionsChange)="changeOptions($event)" />
+              <ns-quick-start-info [gameId]="room()?.selectedGameId || 'pick-number'" />
               @if (client.isHost()) {
                 <button type="button" class="primary start" (click)="client.startGame()">
                   <lucide-icon [img]="Play" aria-hidden="true" />

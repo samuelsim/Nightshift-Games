@@ -21,6 +21,8 @@ export type GameActionResult<TState> = GameAccepted<TState> | GameRejected<TStat
 
 export interface GameDefinition<TState, TAction extends PlayerAction, TPublicView, TPlayerView> {
   readonly metadata: GameMetadata;
+  // Server-only identity of the currently shown card; never sent to clients.
+  replayKey?(state: TState): string;
   createInitialState(context: GameContext): TState;
   start(state: TState, context: GameContext): GameActionResult<TState>;
   handleAction(

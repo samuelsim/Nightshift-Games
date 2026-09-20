@@ -10,9 +10,9 @@ function context(count = 3, now = 1000): GameContext {
   })) };
 }
 describe('Majority Rules', () => {
-  it('uses five distinct prompts from thirty and requires at least two players', () => {
+  it('uses five distinct prompts from fifty and requires at least two players', () => {
     const ctx = context(); const state = game.createInitialState(ctx);
-    assert.equal(majorityPrompts.length, 30); assert.equal(new Set(state.deck.map(p => p.question)).size, 5);
+    assert.equal(majorityPrompts.length, 50); assert.equal(new Set(state.deck.map(p => p.question)).size, 5);
     assert.equal(game.start(state, context(1)).ok, false);
   });
   it('keeps submissions private and excludes your own answer when scoring', () => {

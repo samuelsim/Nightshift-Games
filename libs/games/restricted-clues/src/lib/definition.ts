@@ -1,9 +1,30 @@
+import { freshHand } from '@nightshift/game-core';
 import { gameRounds } from '@nightshift/protocol';
 import type { GameContext, GameDefinition, GameActionResult } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
 import { restrictedCluesMetadata } from './metadata';
 
 const cards = [
+  ["boomerang","throw","return"],
+  ["accordion","music","keys"],
+  ["parachute","fall","sky"],
+  ["compass","north","direction"],
+  ["trampoline","jump","bounce"],
+  ["scarecrow","farm","birds"],
+  ["mermaid","fish","sea"],
+  ["avalanche","snow","mountain"],
+  ["carousel","horse","round"],
+  ["typewriter","keys","paper"],
+  ["binoculars","eyes","see"],
+  ["fireworks","bang","sky"],
+  ["dragonfly","insect","wings"],
+  ["waffle","breakfast","syrup"],
+  ["treadmill","run","gym"],
+  ["magnet","metal","attract"],
+  ["igloo","ice","house"],
+  ["giraffe","neck","tall"],
+  ["chess","king","board"],
+  ["origami","paper","fold"],
   ['umbrella', 'rain', 'wet'], ['popcorn', 'cinema', 'corn'], ['pillow', 'sleep', 'bed'],
   ['elevator', 'floor', 'lift'], ['penguin', 'bird', 'ice'], ['toothbrush', 'teeth', 'brush'],
   ['backpack', 'bag', 'school'], ['volcano', 'lava', 'mountain'], ['calendar', 'date', 'month'],
@@ -36,12 +57,9 @@ export interface CluesPlayerView { readonly round: number; readonly word: string
 
 export const restrictedCluesDefinition: GameDefinition<CluesState, PlayerAction, CluesPublicView, CluesPlayerView> = {
   metadata: restrictedCluesMetadata,
+  replayKey: state=>state.deck[state.round-1]![0],
   createInitialState(ctx) {
-    const deck: Card[] = [...cards];
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(ctx.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j]!, deck[i]!];
-    }
+    const deck=freshHand(cards,card=>card[0],ctx.previousContent ?? [],gameRounds('restricted-clues',ctx.gameOptions),ctx.random);
     const order = [...ctx.players.values()].filter(p => p.connected).map(p => p.id);
     return { phase: 'CLUES', round: 1, deck: deck.slice(0, gameRounds('restricted-clues',ctx.gameOptions)), order, giver: order[0] ?? '',
       timerEndsAt: ctx.now + 60_000, clues: [], guesses: [], scores: {}, outcome: '', lastGuessAt: {} };

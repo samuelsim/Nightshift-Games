@@ -12,4 +12,5 @@ export const gameStyles = `
   button:disabled { opacity: .5; cursor: default; } button.selected { border-color: var(--gold); }
   .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .7rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
   .chips { display: flex; gap: .5rem; flex-wrap: wrap; } .chips strong { padding: .5rem; background: var(--surface-strong); border-radius: 6px; }
+  .poll-verdict {padding:.65rem .9rem;border-left:4px solid var(--gold);background:#ffd66b12;color:var(--gold);font-weight:800;animation:reveal-arrive .35s ease both}
 `;

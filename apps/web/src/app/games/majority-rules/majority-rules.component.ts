@@ -28,7 +28,7 @@ import { GameScoresComponent } from '../../shared/game-scores.component';
           <button class="primary" [disabled]="seconds() === 0 || locked() || !participating() || !choice() || !prediction()" (click)="submit()">{{ locked() ? 'Choices locked' : seconds() === 0 ? 'Time is up' : 'Lock answer and prediction' }}</button>
         </section>
       } @else if (game.phase === 'REVEAL') {
-        <section aria-live="polite"><h2>{{ game.prompt.question }}</h2>
+        <section aria-live="polite"><p class="poll-verdict">{{ verdict() }}</p><h2>{{ game.prompt.question }}</h2>
           <div class="poll-board" aria-label="All submitted answers">
             @for (side of choices; track side; let i=$index) {
               <div class="poll-side"><div><strong>{{ side }}</strong><span>{{ game.prompt.options[i] }}</span><b>{{ game.result?.counts?.[side] ?? 0 }} votes</b></div><div class="poll-track" aria-hidden="true"><span [style.width.%]="share(side)"></span></div></div>
@@ -50,6 +50,13 @@ import { GameScoresComponent } from '../../shared/game-scores.component';
   }
 ` })
 export class MajorityRulesComponent {
+  verdict():string {
+    const counts=this.view()?.result?.counts;
+    if(!counts || counts.A+counts.B===0) return 'An unusually quiet room…';
+    if(counts.A===counts.B) return 'A room divided · Perfect split';
+    if(!counts.A || !counts.B) return 'Hive mind · Everyone agrees!';
+    return Math.abs(counts.A-counts.B)===1 ? 'Photo finish · One vote decides it' : 'The room has spoken';
+  }
   share(side:MajorityChoice):number {const c=this.view()?.result?.counts;return c && c.A+c.B ? c[side]/(c.A+c.B)*100:0;}
   readonly room = input.required<RoomView>(); readonly playerId = input.required<string | null>();
   readonly privateView = input.required<unknown>(); readonly isHost = input.required<boolean>(); readonly action = output<PlayerAction>();

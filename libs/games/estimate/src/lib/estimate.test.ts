@@ -71,10 +71,10 @@ describe('Estimate', () => {
   });
   it('uses UTC daily identity and identical versioned sets across rooms and player counts', () => {
     const now=Date.parse('2026-09-15T00:00:00Z');
-    assert.equal(dailyIdentity(now-1),'v3:2026-09-14');
-    assert.equal(dailyIdentity(now),'v3:2026-09-15');
-    assert.equal(dailyIdentity(now+86_399_999),'v3:2026-09-15');
-    assert.equal(dailyIdentity(now+86_400_000),'v3:2026-09-16');
+    assert.equal(dailyIdentity(now-1),'v4:2026-09-14');
+    assert.equal(dailyIdentity(now),'v4:2026-09-15');
+    assert.equal(dailyIdentity(now+86_399_999),'v4:2026-09-15');
+    assert.equal(dailyIdentity(now+86_400_000),'v4:2026-09-16');
     for(const deck of ['facts','generated','earth','wildlife','mixed'] as const) for(const difficulty of ['easy','standard','hard'] as const) {
       const options={daily:true,deck,difficulty};
       const a=game.createInitialState({...context(1),now,estimateOptions:options,random:()=>{throw new Error('Daily content must not use room randomness');}});
@@ -83,10 +83,10 @@ describe('Estimate', () => {
       assert.equal(new Set(a.prompts.map(p=>p.question)).size,5);
       const c=game.createInitialState({...context(1),now:now+86_400_000,estimateOptions:options});
       assert.notDeepEqual(c.prompts,a.prompts);
-      assert.equal(game.getPublicView(a,context()).dailyId,'v3:2026-09-15');
+      assert.equal(game.getPublicView(a,context()).dailyId,'v4:2026-09-15');
       assert.equal('prompts' in game.getPublicView(a,context()),false);
     }
-    assert.notEqual(dailyRandom('v1:2026-09-15','facts','easy')(),dailyRandom('v3:2026-09-15','facts','easy')());
+    assert.notEqual(dailyRandom('v1:2026-09-15','facts','easy')(),dailyRandom('v4:2026-09-15','facts','easy')());
   });
   it('keeps an in-progress daily set through midnight and records a zero-point completed daily run', () => {
     const now=Date.parse('2026-09-15T23:59:59Z');
@@ -97,7 +97,7 @@ describe('Estimate', () => {
       state=game.tick!(state,{...ctx,now:state.timerEndsAt}).state;
       assert.equal(state.phase,'REVEAL'); assert.equal(state.scores['p0'],0);
       state=game.handleAction(state,'p0',{type:'ESTIMATE_NEXT_ROUND',round},{...ctx,now:now+round*20_000}).state;
-      assert.equal(state.dailyId,'v3:2026-09-15'); assert.equal(state.prompts,original);
+      assert.equal(state.dailyId,'v4:2026-09-15'); assert.equal(state.prompts,original);
     }
     assert.equal(state.phase,'RESULTS');
     const regular=game.createInitialState({...ctx,estimateOptions:{...ctx.estimateOptions,daily:false}});

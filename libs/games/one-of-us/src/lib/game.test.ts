@@ -18,9 +18,11 @@ function voting(state: OneOfUsState, ctx: GameContext): OneOfUsState {
   return game.tick!(discussed,{...ctx,now:discussed.timerEndsAt}).state;
 }
 describe('One of Us Is Lying', () => {
-  it('has thirty cards, conceals the word from the bluffer and hides all roles publicly', () => {
+  it('has fifty cards, conceals the word from the bluffer and hides all roles publicly', () => {
     const ctx = context(); const state = game.createInitialState(ctx);
-    assert.equal(wordCards.length,30); assert.equal(new Set(state.deck.map(c=>c.word)).size,3);
+    assert.equal(wordCards.length,50); assert.equal(new Set(state.deck.map(c=>c.word)).size,3);
+    const categories=new Set(wordCards.map(card=>card.category));
+    for(const category of categories) assert.ok(wordCards.filter(card=>card.category===category).length>=5,'a category should not identify one memorised word');
     assert.equal(game.start(state,context(2)).ok,false);
     const view = game.getPublicView(state,ctx);
     assert.equal('bluffer' in view,false); assert.equal('deck' in view,false); assert.equal(view.result,null);

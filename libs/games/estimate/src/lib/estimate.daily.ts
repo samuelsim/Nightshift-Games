@@ -1,6 +1,6 @@
 // Bump this version when changing daily content, ordering or generation rules.
 // A daily set is fixed at game creation and independent of room identity/player count.
-export const DAILY_VERSION = 'v3';
+export const DAILY_VERSION = 'v4';
 export function dailyIdentity(now: number): string {
   return `${DAILY_VERSION}:${new Date(now).toISOString().slice(0, 10)}`;
 }

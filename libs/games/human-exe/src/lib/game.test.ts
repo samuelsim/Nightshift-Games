@@ -30,7 +30,7 @@ describe('Human.exe', () => {
       const next=game.createInitialState({...ctx,previousHumanQuestions:recent});
       assert.ok(next.deck.every(card=>!recent.includes(card.question)));
     }
-    assert.equal(seen.size,28); assert.equal(positions.size,4);
+    assert.equal(seen.size,40); assert.equal(positions.size,4);
   });
   it('times out solo rounds, excludes late answers, and rejects duplicate pairs',()=>{
     const ctx=context(1); const state=game.createInitialState(ctx); const card=state.deck[0]!;

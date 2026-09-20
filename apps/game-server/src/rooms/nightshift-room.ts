@@ -27,7 +27,8 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
   override maxClients = 8;
   private activeGameDefinition: AnyGameDefinition | null = null;
   private activeGameState: unknown = null;
-  private humanQuestionHistory: string[] = [];
+  private contentHistory: Record<string,string[]> = {};
+  private lastContentRound = "";
   private estimateQuestionHistory: string[] = [];
   private lastEstimateRound = '';
 
@@ -370,9 +371,12 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
         this.lastEstimateRound = token;
       }
     }
-    if (this.activeGameDefinition.metadata.id === 'human-exe') {
-      const question = getStringProperty(publicView, 'question');
-      if (question && !this.humanQuestionHistory.includes(question)) this.humanQuestionHistory = [...this.humanQuestionHistory,question].slice(-15);
+    const replayKey=this.activeGameDefinition.replayKey?.(this.activeGameState);
+    const replayToken=this.state.activeGame.runId+':'+getNumberProperty(publicView,'round');
+    if(replayKey && replayToken!==this.lastContentRound) {
+      const id=this.activeGameDefinition.metadata.id;
+      this.contentHistory[id]=[...(this.contentHistory[id] ?? []).filter(key=>key!==replayKey),replayKey].slice(-1000);
+      this.lastContentRound=replayToken;
     }
     const round = getNumberProperty(publicView, 'round');
 
@@ -481,7 +485,7 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
       players: new Map(this.getPlayers().map((player) => [player.id, player])),
       now: Date.now(),
       random: Math.random,
-      previousHumanQuestions: this.humanQuestionHistory,
+      previousContent: this.contentHistory[gameId] ?? [],
       previousEstimateQuestions: this.estimateQuestionHistory,
       estimateOptions: {
         daily: this.state.estimateDaily,

@@ -34,12 +34,15 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
             @if (view.solo.playerId !== playerId()) { <p>You join next round. Watch the hunt!</p> }
             <div class="hunt-lives" aria-label="Remaining guesses">@for (life of [0,1,2]; track life) { <span [class.spent]="life < view.solo.attempts.length" aria-hidden="true">◆</span> }<small>{{ 3-view.solo.attempts.length }} chances to crack it</small></div>
             <div class="hunt-trail" aria-live="polite">@for (attempt of view.solo.attempts; track attempt.value) { <span class="hint-ticket"><b>{{ attempt.value }}</b><i aria-hidden="true">{{ attempt.hint === 'Go higher' ? '↑' : '↓' }}</i>{{ attempt.hint }}</span> }</div>
+            <div class="hunt-radar" aria-live="polite"><span aria-hidden="true">◎</span><strong>{{ huntRange() }}</strong><small>Follow the arrows. Narrow the search.</small></div>
           } @else { <p>Closest to the secret random number earns 5 points. An exact hit earns 8. Ties share the win.</p> }
           <div class="number-grid">
             @for (value of values; track value) {
               <button
                 type="button"
                 [class.selected]="playerView?.submittedValue === value"
+                [class.ruled-out]="view.solo && ruledOut(value)"
+                [attr.aria-label]="view.solo && ruledOut(value) ? value + ', ruled out by your hints' : 'Pick ' + value"
                 [disabled]="expired() || (view.solo ? view.solo.playerId !== playerId() || tried(value) : playerView?.submitted)"
                 (click)="pick(value)"
               >
@@ -96,6 +99,12 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
   `,
   styles: [
     `
+      .hunt-radar {display:grid;grid-template-columns:32px 1fr;gap:.2rem .6rem;align-items:center;padding:.65rem .8rem;margin:.6rem 0;border:1px solid var(--gold);border-radius:10px;background:#ffd66b0a}
+      .hunt-radar>span {grid-row:1/3;color:var(--gold);font-size:2rem;animation:radar-pulse 1.8s ease-in-out infinite}
+      .hunt-radar strong {font-size:.9rem;color:var(--gold)}.hunt-radar small{font-size:.75rem;color:var(--muted)}
+      .number-grid button.ruled-out {opacity:.4;text-decoration:line-through;filter:grayscale(1);transform:scale(.94);transition:opacity .25s,transform .25s}
+      @keyframes radar-pulse {50%{opacity:.45;transform:scale(.9)}}
+      @media(prefers-reduced-motion:reduce){.hunt-radar>span{animation:none}.number-grid button.ruled-out{transition:none}}
       .game {
         display: grid;
         gap: 1rem;
@@ -237,6 +246,13 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
   ]
 })
 export class PickNumberComponent {
+  ruledOut(value:number):boolean {
+    return this.publicView()?.solo?.attempts.some(attempt=>attempt.hint==='Go higher' ? value<=attempt.value : attempt.hint==='Go lower' ? value>=attempt.value : false) ?? false;
+  }
+  huntRange():string {
+    const remaining=this.values.filter(value=>!this.ruledOut(value));
+    return remaining.length===1 ? `Target isolated: ${remaining[0]}` : `Search zone: ${remaining[0]}–${remaining.at(-1)}`;
+  }
   private readonly now = useClock();
   readonly expired = computed(() => !!this.publicView()?.timerEndsAt && this.now() >= this.publicView()!.timerEndsAt!);
   tried(value:number):boolean { return this.publicView()?.solo?.attempts.some(a=>a.value===value) ?? false; }

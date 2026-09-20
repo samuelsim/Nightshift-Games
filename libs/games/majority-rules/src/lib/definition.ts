@@ -1,3 +1,4 @@
+import { freshHand } from '@nightshift/game-core';
 import { gameRounds } from '@nightshift/protocol';
 import { getConnectedPlayers, shuffled, type GameContext, type GameDefinition, type GameActionResult } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
@@ -26,8 +27,9 @@ export interface MajorityPlayerView { readonly round: number; readonly submissio
 
 export const majorityRulesDefinition: GameDefinition<MajorityState, PlayerAction, MajorityPublicView, MajorityPlayerView> = {
   metadata: majorityRulesMetadata,
+  replayKey: state=>state.deck[state.round-1]!.question,
   createInitialState(ctx) {
-    return { phase: 'SUBMISSION', round: 1, deck: shuffled(majorityPrompts, ctx.random).slice(0, gameRounds('majority-rules',ctx.gameOptions)),
+    return { phase: 'SUBMISSION', round: 1, deck: freshHand(majorityPrompts,card=>card.question,ctx.previousContent ?? [],gameRounds('majority-rules',ctx.gameOptions),ctx.random),
       participants: getConnectedPlayers(ctx.players).map(p => p.id), timerEndsAt: ctx.now + 30_000,
       submissions: {}, scores: {}, result: null };
   },

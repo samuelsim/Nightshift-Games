@@ -1,3 +1,4 @@
+import { freshHand } from '@nightshift/game-core';
 import { gameRounds } from '@nightshift/protocol';
 import type { GameContext, GameDefinition, GameActionResult } from '@nightshift/game-core';
 import { shuffled } from '@nightshift/game-core';
@@ -5,6 +6,30 @@ import type { PlayerAction } from '@nightshift/protocol';
 import { infiltratorMetadata } from './infiltrator.metadata';
 
 const prompts = [
+  "Write the first rule of a hotel run by cats.",
+  "A dragon opens a bakery. Write its first advert.",
+  "Invent a one-star review of a haunted house.",
+  "Write a dating profile for a lonely satellite.",
+  "A time traveller borrows your bicycle. Leave instructions.",
+  "Write a royal decree banning an everyday annoyance.",
+  "An alien asks why humans queue. Explain.",
+  "Write a warning sign for a very dramatic houseplant.",
+  "Pitch a reality show starring garden gnomes.",
+  "Your fridge becomes a life coach. Write its advice.",
+  "Write a postcard from a holiday on the moon.",
+  "A detective suspects the toaster. Write the accusation.",
+  "Describe a superpower nobody asked for.",
+  "Write a complaint to the weather department.",
+  "A pirate starts a book club. Write the invitation.",
+  "Write the opening line of a terrible superhero speech.",
+  "Invent a museum exhibit about modern human behaviour.",
+  "Your socks form a union. Write their first demand.",
+  "Write a slogan for a taxi driven by a snail.",
+  "An octopus becomes a DJ. Announce its debut.",
+  "Invent a polite way to refuse a gift from a wizard.",
+  "Write an apology from a mischievous cloud.",
+  "A robot attends karaoke. Describe its song choice.",
+  "Give instructions for babysitting a tiny dinosaur.",
   'The office kettle has resigned. Write its farewell message.',
   'Invent a terrible excuse for being late to a meeting.',
   'Write a review of the break-room sofa.',
@@ -18,7 +43,7 @@ const prompts = [
   'Write an apology from someone who finished the coffee.',
   'Invent a slogan for a vending machine that never works.'
 ] as const;
-const codeWords = ['efficient','optimal','protocol','capacity','routine','priority','precise','system','process','standard','output','consistent'];
+const codeWords = ['unexpected','delightful','ordinary','possibly','curious','honestly','suspicious','marvellous','temporary','apparently','dramatic','surprisingly','efficient','optimal','protocol','capacity','routine','priority','precise','system','process','standard','output','consistent'];
 type Phase = 'SUBMISSION'|'DISCUSSION'|'VOTING'|'REVEAL'|'RESULTS';
 interface ResponseCard { id:string; text:string; }
 export interface InfiltratorResult {
@@ -42,9 +67,10 @@ const word = (ctx:GameContext) => codeWords[Math.floor(ctx.random()*codeWords.le
 
 export const infiltratorDefinition: GameDefinition<InfiltratorState,PlayerAction,InfiltratorPublicView,InfiltratorPlayerView> = {
   metadata:infiltratorMetadata,
+  replayKey: state=>state.deck[state.round-1]!,
   createInitialState(ctx) {
     const participants=connected(ctx), machine=shuffled(participants,ctx.random)[0]??'';
-    return {phase:'SUBMISSION',round:1,deck:shuffled(prompts,ctx.random).slice(0, gameRounds('human-infiltrator',ctx.gameOptions)),participants,machine,usedMachines:[machine],codeWord:word(ctx),timerEndsAt:ctx.now+30_000,responses:{},cards:[],authors:{},votes:{},scores:{},result:null};
+    return {phase:'SUBMISSION',round:1,deck:freshHand(prompts,card=>card,ctx.previousContent ?? [],gameRounds('human-infiltrator',ctx.gameOptions),ctx.random),participants,machine,usedMachines:[machine],codeWord:word(ctx),timerEndsAt:ctx.now+30_000,responses:{},cards:[],authors:{},votes:{},scores:{},result:null};
   },
   start:(state,ctx)=>connected(ctx).length>=3?{ok:true,state}:reject(state,'need_players','Infiltrator needs at least three players.'),
   handleAction(state,id,action,ctx) {

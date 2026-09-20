@@ -5,6 +5,28 @@ import { gameRegistry, getGameDefinition } from '@nightshift/games-registry';
 import { defaultGameOptions, effectiveGameOptions, validGameOptionsPatch, type PlayerAction } from '@nightshift/protocol';
 import { humanExeDefinition } from '../../../../libs/games/human-exe/src/lib/definition';
 import { estimateDefinition } from '../../../../libs/games/estimate/src/lib/estimate.definition';
+import { freshHand } from '@nightshift/game-core';
+
+test('fresh hands prefer unseen cards and oldest replays without duplicates',()=>{
+  assert.deepEqual(new Set(freshHand(['a','b','c','d'],x=>x,['a','b','c'],2,()=>.4)),new Set(['d','a']));
+  assert.deepEqual(new Set(freshHand(['a','b','c'],x=>x,['b','a','c'],2,()=>.4)),new Set(['b','a']));
+});
+
+for(const id of ['majority-rules','one-of-us','restricted-clues','human-exe','human-infiltrator']) test(`${id} supplies thirty different cards across replays without leaking history`,()=>{
+  const game=getGameDefinition(id)!;
+  const history:string[]=[];
+  for(let run=0;run<3;run++) {
+    const ctx={...context(10),previousContent:history};
+    const state=game.createInitialState(ctx) as Record<string,unknown>;
+    for(let round=1;round<=10;round++) {
+      const current={...state,round}; const key=game.replayKey!(current);
+      assert.ok(key); assert.equal(history.includes(key),false,`${id} repeated ${key}`); history.push(key);
+      const view=game.getPublicView(current,ctx) as Record<string,unknown>;
+      assert.equal('previousContent' in view,false); assert.equal('deck' in view,false);
+      if(id==='one-of-us' || id==='restricted-clues') assert.equal(JSON.stringify(view).includes(JSON.stringify(key)),false,'secret word leaked');
+    }
+  }
+});
 
 const context = (rounds: number): GameContext => ({ now: 1000, random: () => .42, hostPlayerId: 'p0', gameOptions: { rounds },
   players: new Map(Array.from({length:3}, (_, i) => [`p${i}`, {id:`p${i}`, nickname:`Player ${i}`, avatarId:'moon', connected:true, ready:true, host:i===0, score:0, joinedAt:0, lastSeenAt:1000}])) });

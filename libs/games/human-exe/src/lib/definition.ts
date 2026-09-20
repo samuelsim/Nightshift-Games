@@ -2,7 +2,7 @@ import { gameRounds } from '@nightshift/protocol';
 import type { GameDefinition, GameActionResult, GameContext } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
 import { humanExeMetadata } from './metadata';
-import { shuffled } from '@nightshift/game-core';
+import { freshHand, shuffled } from '@nightshift/game-core';
 import { extraChallenges, type HumanChallenge } from './scenarios';
 
 type Challenge = HumanChallenge;
@@ -36,13 +36,12 @@ export interface HumanPublicView { readonly difficulty?: string; readonly phase:
 export interface HumanPlayerView { readonly round: number; readonly role: Role | null; readonly choice: number | null; }
 export const humanExeDefinition: GameDefinition<HumanState, PlayerAction, HumanPublicView, HumanPlayerView> = {
   metadata: humanExeMetadata,
+  replayKey: state=>state.deck[state.round-1]!.question,
   createInitialState(ctx) {
     const count=gameRounds('human-exe',ctx.gameOptions);
     const difficulty=String(ctx.gameOptions?.['difficulty'] ?? 'standard');
-    const fresh = challenges.filter(card=>!ctx.previousHumanQuestions?.includes(card.question));
-    const deck = fresh.length >= count ? [...fresh] : [...challenges];
-    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(ctx.random() * (i + 1)); [deck[i], deck[j]] = [deck[j]!, deck[i]!]; }
-    const selected = deck.slice(0,count).map(card=>{
+    const deck=freshHand(challenges,card=>card.question,ctx.previousContent ?? ctx.previousHumanQuestions ?? [],count,ctx.random);
+    const selected = deck.map(card=>{
       const order=shuffled(difficulty==='easy' ? [card.human,card.machine] : card.options.map((_,index)=>index),ctx.random);
       return {...card,options:order.map(index=>card.options[index]!),human:order.indexOf(card.human),machine:order.indexOf(card.machine)};
     });

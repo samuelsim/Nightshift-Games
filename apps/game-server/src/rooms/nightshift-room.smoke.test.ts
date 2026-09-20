@@ -16,6 +16,28 @@ import type { InfiltratorPublicView, InfiltratorPlayerView } from '@nightshift/g
 let activeServer: Server | null = null;
 
 describe('NightshiftRoom smoke flow', () => {
+  it('remembers party prompts across abandoned games and game switches',async()=>{
+    const {client}=await startServer();
+    const host=await client.create<NightshiftRoomState>('nightshift_room',{nickname:'Replay host'});
+    const guests=await Promise.all(['A','B'].map(nickname=>client.joinById<NightshiftRoomState>(host.roomId,{nickname})));
+    for(const room of [host,...guests]) room.onMessage('serverMessage',()=>{});
+    const seen:Record<string,Set<string>>={'majority-rules':new Set(),'human-infiltrator':new Set()};
+    for(let run=0;run<4;run++) for(const gameId of Object.keys(seen)) {
+      host.send('clientMessage',{type:'SELECT_GAME',gameId});
+      await waitFor(()=>guests.every(guest=>guest.state.selectedGameId===gameId));
+      for(const guest of guests) guest.send('clientMessage',{type:'SET_READY',ready:true});
+      await waitFor(()=>[...host.state.players.values()].every(player=>player.ready));
+      host.send('clientMessage',{type:'START_GAME'});
+      await waitFor(()=>host.state.phase==='PLAYING');
+      const view=JSON.parse(host.state.activeGame.publicViewJson);
+      const question=view.question ?? view.prompt.question;
+      assert.equal(seen[gameId]!.has(question),false); seen[gameId]!.add(question);
+      assert.equal('contentHistory' in host.state,false);
+      host.send('clientMessage',{type:'RETURN_TO_LOBBY'});
+      await waitFor(()=>host.state.phase==='LOBBY');
+    }
+    for(const guest of guests) await guest.leave(); await host.leave();
+  });
   it('validates shared settings, preserves readiness on no-op edits and honors default starts', async () => {
     const {client}=await startServer();
     const host=await client.create<NightshiftRoomState>('nightshift_room',{nickname:'Host'});
@@ -156,7 +178,7 @@ describe('NightshiftRoom smoke flow', () => {
     const firstQuestion=views()[0]!.prompt.question;
     for(let round=1;round<=5;round++) {
       const [a,b]=views();assert.deepEqual(a!.prompt,b!.prompt);
-      assert.equal(a!.dailyId,'v3:2026-09-15');assert.equal('answer' in a!.prompt,false);
+      assert.equal(a!.dailyId,'v4:2026-09-15');assert.equal('answer' in a!.prompt,false);
       if(round===1) t.mock.timers.tick(6_000);
       for(const room of rooms) room.send('clientMessage',{type:'GAME_ACTION',action:{type:'ESTIMATE_SUBMIT',round,value:100}});
       await waitFor(()=>views().every(view=>view.phase==='REVEAL'));
@@ -164,14 +186,14 @@ describe('NightshiftRoom smoke flow', () => {
       for(const room of rooms) room.send('clientMessage',{type:'GAME_ACTION',action:{type:'ESTIMATE_NEXT_ROUND',round}});
       await waitFor(()=>views().every(view=>view.phase===(round===5?'RESULTS':'SUBMISSION')));
     }
-    assert.ok(rooms.every(room=>room.state.activeGame.mode==='daily:v3:2026-09-15:estimate:generated:standard:solo'));
+    assert.ok(rooms.every(room=>room.state.activeGame.mode==='daily:v4:2026-09-15:estimate:generated:standard:solo'));
     for(const room of rooms) room.send('clientMessage',{type:'VOTE_NEXT_GAME',gameId:'estimate'});
     await waitFor(()=>rooms.every(room=>room.state.nextGameVotes.size===1));
     t.mock.timers.tick(15_001);
     await waitFor(()=>views().every(view=>view.phase==='SUBMISSION'));
-    assert.equal(views()[0]!.dailyId,'v3:2026-09-16');assert.deepEqual(views()[0]!.prompt,views()[1]!.prompt);
+    assert.equal(views()[0]!.dailyId,'v4:2026-09-16');assert.deepEqual(views()[0]!.prompt,views()[1]!.prompt);
     assert.notEqual(views()[0]!.prompt.question,firstQuestion);
-    assert.equal(rooms[0]!.state.activeGame.mode,'daily:v3:2026-09-16:estimate:generated:standard:solo');
+    assert.equal(rooms[0]!.state.activeGame.mode,'daily:v4:2026-09-16:estimate:generated:standard:solo');
     await leave(...rooms);
   });
   it('enforces Estimate options, hides factual answers, and keeps settings across automatic replay', async (t) => {
