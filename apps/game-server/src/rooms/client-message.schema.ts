@@ -7,6 +7,7 @@ const playerActionSchema = z
   .passthrough();
 
 export const clientMessageSchema = z.discriminatedUnion('type', [
+  z.object({type:z.literal('SET_GAME_OPTIONS'),gameId:z.string().max(64),options:z.record(z.string().max(32),z.union([z.string().max(64),z.number().finite(),z.boolean()]))}),
   z.object({ type: z.literal('SET_ESTIMATE_OPTIONS'), deck: z.enum(['generated', 'facts', 'earth', 'wildlife', 'mixed']), difficulty: z.enum(['easy', 'standard', 'hard']), daily: z.boolean().default(false) }),
   z.object({ type: z.literal('VOTE_NEXT_GAME'), gameId: z.string().min(1).max(64) }),
   z.object({
@@ -18,7 +19,7 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
     gameId: z.string().min(1)
   }),
   z.object({
-    type: z.literal('START_GAME')
+    type: z.literal('START_GAME'), useDefaults:z.boolean().optional()
   }),
   z.object({
     type: z.literal('RETURN_TO_LOBBY')

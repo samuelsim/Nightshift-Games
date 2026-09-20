@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import type { GameContext, GameDefinition, GameActionResult } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
 import { restrictedCluesMetadata } from './metadata';
@@ -42,7 +43,7 @@ export const restrictedCluesDefinition: GameDefinition<CluesState, PlayerAction,
       [deck[i], deck[j]] = [deck[j]!, deck[i]!];
     }
     const order = [...ctx.players.values()].filter(p => p.connected).map(p => p.id);
-    return { phase: 'CLUES', round: 1, deck: deck.slice(0, 4), order, giver: order[0] ?? '',
+    return { phase: 'CLUES', round: 1, deck: deck.slice(0, gameRounds('restricted-clues',ctx.gameOptions)), order, giver: order[0] ?? '',
       timerEndsAt: ctx.now + 60_000, clues: [], guesses: [], scores: {}, outcome: '', lastGuessAt: {} };
   },
   start(state, ctx) {

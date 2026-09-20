@@ -72,6 +72,7 @@ defineTypes(ActiveGameSchema, {
 });
 
 export class NightshiftRoomState extends Schema {
+  declare gameOptionsJson: string;
   declare estimateDeck: string;
   declare estimateDaily: boolean;
   declare estimateDifficulty: string;
@@ -86,6 +87,7 @@ export class NightshiftRoomState extends Schema {
 
   constructor() {
     super();
+    this.gameOptionsJson = '{}';
     this.code = '';
     this.phase = 'LOBBY';
     this.hostPlayerId = '';
@@ -101,6 +103,7 @@ export class NightshiftRoomState extends Schema {
 }
 
 defineTypes(NightshiftRoomState, {
+  gameOptionsJson: 'string',
   estimateDeck: 'string',
   estimateDaily: 'boolean',
   estimateDifficulty: 'string',

@@ -9,7 +9,7 @@
     "dev:server": "pnpm --filter @nightshift/game-server dev",
     "dev:web": "pnpm --filter @nightshift/web dev",
     "build": "pnpm -r --if-present build",
-    "test": "tsx --test libs/games/estimate/src/lib/estimate.test.ts libs/games/pick-number/src/lib/pick-number.test.ts libs/games/restricted-clues/src/lib/game.test.ts libs/games/human-exe/src/lib/game.test.ts apps/game-server/src/rooms/room-policy.test.ts apps/game-server/src/rooms/next-game-policy.test.ts apps/game-server/src/rooms/nightshift-room.smoke.test.ts libs/games/majority-rules/src/lib/game.test.ts libs/games/one-of-us/src/lib/game.test.ts apps/web/tests/feedback-event.test.ts apps/web/tests/feedback-audio.test.ts apps/web/tests/countdown-cue.test.ts apps/web/tests/round-outcome.test.ts apps/web/tests/personal-stats.test.ts libs/games/human-exe/src/lib/infiltrator.test.ts",
+    "test": "tsx --test libs/games/estimate/src/lib/estimate.test.ts libs/games/pick-number/src/lib/pick-number.test.ts libs/games/restricted-clues/src/lib/game.test.ts libs/games/human-exe/src/lib/game.test.ts apps/game-server/src/rooms/room-policy.test.ts apps/game-server/src/rooms/next-game-policy.test.ts apps/game-server/src/rooms/nightshift-room.smoke.test.ts libs/games/majority-rules/src/lib/game.test.ts libs/games/one-of-us/src/lib/game.test.ts apps/web/tests/feedback-event.test.ts apps/web/tests/feedback-audio.test.ts apps/web/tests/countdown-cue.test.ts apps/web/tests/round-outcome.test.ts apps/web/tests/personal-stats.test.ts libs/games/human-exe/src/lib/infiltrator.test.ts apps/game-server/src/rooms/game-options.test.ts",
     "typecheck": "pnpm -r --if-present typecheck",
     "start": "node --import tsx apps/game-server/dist/main.js"
   },

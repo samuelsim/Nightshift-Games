@@ -4,8 +4,8 @@ import { extraPrompts } from './estimate.extra-prompts';
 import { selectPrompts } from './estimate.selection';
 
 // Generated quantities keep answers exact, content original, and sessions varied.
-export function createPrompts(random: () => number, difficulty: 'easy' | 'standard' | 'hard' = 'standard', previous: readonly string[] = []): readonly EstimatePrompt[] {
-  if (difficulty !== 'standard') return createTierPrompts(random, difficulty, previous);
+export function createPrompts(random: () => number, difficulty: 'easy' | 'standard' | 'hard' = 'standard', previous: readonly string[] = [], count = 5): readonly EstimatePrompt[] {
+  if (difficulty !== 'standard') return createTierPrompts(random, difficulty, previous, count);
   const days = randomIntInclusive(random, 3, 19);
   const boxes = randomIntInclusive(random, 12, 48);
   const hours = randomIntInclusive(random, 4, 16);
@@ -42,10 +42,10 @@ export function createPrompts(random: () => number, difficulty: 'easy' | 'standa
     const j = randomIntInclusive(random, 0, i);
     [prompts[i], prompts[j]] = [prompts[j]!, prompts[i]!];
   }
-  return selectPrompts([...prompts,...extraPrompts(random,difficulty)],random,previous);
+  return selectPrompts([...prompts,...extraPrompts(random,difficulty)],random,previous,count);
 }
 
-function createTierPrompts(random: () => number, difficulty: 'easy' | 'hard', previous: readonly string[]): EstimatePrompt[] {
+function createTierPrompts(random: () => number, difficulty: 'easy' | 'hard', previous: readonly string[], count: number): EstimatePrompt[] {
   const a = randomIntInclusive(random, 3, 9);
   const b = randomIntInclusive(random, 12, 25);
   const cards: EstimatePrompt[] = difficulty === 'easy' ? [
@@ -67,5 +67,5 @@ function createTierPrompts(random: () => number, difficulty: 'easy' | 'hard', pr
     const j = randomIntInclusive(random, 0, i);
     [cards[i], cards[j]] = [cards[j]!, cards[i]!];
   }
-  return selectPrompts([...cards,...extraPrompts(random,difficulty)],random,previous);
+  return selectPrompts([...cards,...extraPrompts(random,difficulty)],random,previous,count);
 }

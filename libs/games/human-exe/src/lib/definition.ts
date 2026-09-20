@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import type { GameDefinition, GameActionResult, GameContext } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
 import { humanExeMetadata } from './metadata';
@@ -20,6 +21,7 @@ type Role = 'HUMAN' | 'MACHINE';
 interface HumanResult { readonly explanation: string; readonly humanAnswer: number; readonly machineAnswer: number;
   readonly choices: readonly { playerId: string; choice: number; role: Role; points: number }[]; }
 export interface HumanState {
+  readonly difficulty?: string;
   readonly soloPlayerId?: string | null; readonly timerEndsAt?: number;
   readonly soloResult?: {humanChoice:number|null;machineChoice:number|null;correctCount:number;bonus:number;points:number} | null;
   readonly phase: 'CHOICE' | 'REVEAL' | 'RESULTS'; readonly round: number;
@@ -27,7 +29,7 @@ export interface HumanState {
   readonly choices: Readonly<Record<string, number>>; readonly scores: Readonly<Record<string, number>>;
   readonly result: HumanResult | null;
 }
-export interface HumanPublicView { readonly phase: HumanState['phase']; readonly round: number; readonly maxRounds: number;
+export interface HumanPublicView { readonly difficulty?: string; readonly phase: HumanState['phase']; readonly round: number; readonly maxRounds: number;
   readonly soloPlayerId?: string | null; readonly timerEndsAt?: number; readonly soloResult?: HumanState['soloResult'];
   readonly question: string; readonly options: readonly string[]; readonly submittedPlayerIds: readonly string[];
   readonly scores: HumanState['scores']; readonly result: HumanResult | null; }
@@ -35,14 +37,16 @@ export interface HumanPlayerView { readonly round: number; readonly role: Role |
 export const humanExeDefinition: GameDefinition<HumanState, PlayerAction, HumanPublicView, HumanPlayerView> = {
   metadata: humanExeMetadata,
   createInitialState(ctx) {
+    const count=gameRounds('human-exe',ctx.gameOptions);
+    const difficulty=String(ctx.gameOptions?.['difficulty'] ?? 'standard');
     const fresh = challenges.filter(card=>!ctx.previousHumanQuestions?.includes(card.question));
-    const deck = fresh.length >= 5 ? [...fresh] : [...challenges];
+    const deck = fresh.length >= count ? [...fresh] : [...challenges];
     for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(ctx.random() * (i + 1)); [deck[i], deck[j]] = [deck[j]!, deck[i]!]; }
-    const selected = deck.slice(0,5).map(card=>{
-      const order=shuffled(card.options.map((_,index)=>index),ctx.random);
+    const selected = deck.slice(0,count).map(card=>{
+      const order=shuffled(difficulty==='easy' ? [card.human,card.machine] : card.options.map((_,index)=>index),ctx.random);
       return {...card,options:order.map(index=>card.options[index]!),human:order.indexOf(card.human),machine:order.indexOf(card.machine)};
     });
-    return { ...soloSetup(ctx),phase: 'CHOICE', round: 1, deck: selected, roles: assignRoles(ctx), choices: {}, scores: {}, result: null };
+    return { difficulty, ...soloSetup(ctx),phase: 'CHOICE', round: 1, deck: selected, roles: assignRoles(ctx), choices: {}, scores: {}, result: null };
   },
   start: state => ({ ok: true, state }),
   handleAction(state, id, action, ctx) {
@@ -76,7 +80,7 @@ export const humanExeDefinition: GameDefinition<HumanState, PlayerAction, HumanP
   tick: (state, ctx) => ({ ok: true, state: maybeReveal(state, ctx) }),
   isFinished: state => state.phase === 'RESULTS',
   getPublicView(state) { const card = state.deck[state.round - 1]!;
-    return { soloPlayerId:state.soloPlayerId??null,timerEndsAt:state.timerEndsAt??0,soloResult:state.soloResult??null,phase: state.phase, round: state.round, maxRounds: state.deck.length, question: card.question,
+    return { difficulty:state.difficulty ?? 'standard', soloPlayerId:state.soloPlayerId??null,timerEndsAt:state.timerEndsAt??0,soloResult:state.soloResult??null,phase: state.phase, round: state.round, maxRounds: state.deck.length, question: card.question,
       options: card.options, submittedPlayerIds: Object.keys(state.choices), scores: state.scores, result: state.result }; },
   getPlayerView: (state, id) => ({ round: state.round, role: state.roles[id] ?? null, choice: state.choices[id] ?? null })
 };

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { PersonalStatsService } from '../services/personal-stats.service';
 import type { RoomView } from '@nightshift/protocol';
-import { estimateDeckLabels } from '@nightshift/protocol/room';
+import { effectiveGameOptions, estimateDeckLabels } from '@nightshift/protocol/room';
 import { useClock } from './clock';
 import { gameStyles } from '../games/game-styles';
 
@@ -22,6 +22,8 @@ import { gameStyles } from '../games/game-styles';
         <button [disabled]="!eligible(game.minPlayers, game.maxPlayers)" [class.selected]="room().nextGameVotes[playerId() ?? ''] === game.id"
           [attr.aria-pressed]="room().nextGameVotes[playerId() ?? ''] === game.id" (click)="vote.emit(game.id)">
           {{ game.name }} · {{ count(game.id) }} {{ count(game.id) === 1 ? 'vote' : 'votes' }} {{ room().nextGameVotes[playerId() ?? ''] === game.id ? '· Your vote' : '' }}
+          <small>{{ roundsFor(game.id) }} rounds</small>
+          @if (game.id === 'human-exe') { <small>{{ optionsFor(game.id)['difficulty'] }} difficulty</small> }
           @if (game.id === 'estimate') { <small> · {{ room().estimateOptions?.daily ? 'Daily / ' : '' }}{{ deckLabels[room().estimateOptions?.deck || 'generated'] }} / {{ room().estimateOptions?.difficulty || 'standard' }}</small> }
           @if (!eligible(game.minPlayers, game.maxPlayers)) { <small> · Needs {{ game.minPlayers }}–{{ game.maxPlayers }} players</small> }
         </button>
@@ -32,6 +34,8 @@ import { gameStyles } from '../games/game-styles';
   ` })
 export class NextGameComponent {
   readonly myVoteName = computed(() => this.room().games.find(game => game.id === this.room().nextGameVotes[this.playerId() ?? ''])?.name);
+  optionsFor(id:string) { return effectiveGameOptions(id,this.room().gameOptions?.[id]); }
+  roundsFor(id:string):number { return Number(this.optionsFor(id)['rounds']); }
   readonly deckLabels = estimateDeckLabels;
   readonly stats = inject(PersonalStatsService);
   readonly room = input.required<RoomView>(); readonly playerId = input.required<string | null>(); readonly isHost = input.required<boolean>();

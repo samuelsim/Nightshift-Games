@@ -1,3 +1,4 @@
+import { defaultGameOptions, effectiveGameOptions, validGameOptionsPatch, type GameOptions } from '@nightshift/protocol';
 import { Client, CloseCode, Room } from '@colyseus/core';
 import { customAlphabet } from 'nanoid';
 import { randomUUID } from 'node:crypto';
@@ -129,6 +130,9 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
     player.lastSeenAt = Date.now();
 
     switch (message.type) {
+      case 'SET_GAME_OPTIONS':
+        this.setGameOptions(client, player.id, message.gameId, message.options);
+        return;
       case 'SET_ESTIMATE_OPTIONS':
         if (player.id !== this.state.hostPlayerId) {
           this.sendError(client, 'host_only', 'Only the host can change Estimate settings.');
@@ -138,12 +142,7 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
           this.sendError(client, 'not_in_lobby', 'Select Estimate in the lobby to change its settings.');
           return;
         }
-        if (this.state.estimateDeck !== message.deck || this.state.estimateDifficulty !== message.difficulty || this.state.estimateDaily !== !!message.daily) {
-          this.state.estimateDeck = message.deck;
-          this.state.estimateDifficulty = message.difficulty;
-          this.state.estimateDaily = !!message.daily;
-          for (const participant of this.state.players.values()) participant.ready = participant.connected && participant.id === this.state.hostPlayerId;
-        }
+        this.setGameOptions(client, player.id, 'estimate', {deck:message.deck,difficulty:message.difficulty,daily:!!message.daily});
         return;
       case 'VOTE_NEXT_GAME':
         if (this.state.phase !== 'PLAYING' && this.state.phase !== 'SCOREBOARD') {
@@ -167,7 +166,7 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
         this.selectGame(client, player.id, message.gameId);
         return;
       case 'START_GAME':
-        this.startGame(client, player.id);
+        this.startGame(client, player.id, !!message.useDefaults);
         return;
       case 'RETURN_TO_LOBBY':
         this.returnToLobby(client, player.id);
@@ -178,6 +177,31 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
       default:
         assertNever(message);
     }
+  }
+
+  private optionsFor(gameId: string): GameOptions {
+    const saved = JSON.parse(this.state.gameOptionsJson) as Record<string,GameOptions>;
+    return effectiveGameOptions(gameId,saved[gameId]);
+  }
+
+  private setGameOptions(client: Client, playerId: string, gameId: string, patch: GameOptions): void {
+    if (playerId !== this.state.hostPlayerId) { this.sendError(client,'host_only','Only the host can change game settings.'); return; }
+    if (this.state.phase !== 'LOBBY' || this.state.selectedGameId !== gameId) { this.sendError(client,'not_in_lobby','Choose this game in the lobby to change its settings.'); return; }
+    if (!validGameOptionsPatch(gameId,patch)) { this.sendError(client,'invalid_options','Choose one of the available settings.'); return; }
+    this.saveOptions(gameId,effectiveGameOptions(gameId,{...this.optionsFor(gameId),...patch}));
+  }
+
+  private saveOptions(gameId: string, options: GameOptions): void {
+    if (JSON.stringify(this.optionsFor(gameId)) === JSON.stringify(options)) return;
+    const saved = JSON.parse(this.state.gameOptionsJson) as Record<string,GameOptions>;
+    saved[gameId]=options;
+    this.state.gameOptionsJson=JSON.stringify(saved);
+    if (gameId==='estimate') {
+      this.state.estimateDeck=String(options['deck']);
+      this.state.estimateDifficulty=String(options['difficulty']);
+      this.state.estimateDaily=!!options['daily'];
+    }
+    for (const player of this.state.players.values()) player.ready=player.connected && player.id===this.state.hostPlayerId;
   }
 
   private selectGame(client: Client, playerId: PlayerId, gameId: string): void {
@@ -201,7 +225,8 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
     this.state.selectedGameId = game.metadata.id;
   }
 
-  private startGame(client: Client, playerId: PlayerId): void {
+  private startGame(client: Client, playerId: PlayerId, useDefaults = false): void {
+    if (playerId !== this.state.hostPlayerId) { this.sendError(client,"host_only","Only the host can start the game."); return; }
     if (this.state.phase !== 'LOBBY') {
       this.sendError(client, 'game_already_running', 'A game is already running.');
       return;
@@ -214,6 +239,7 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
       return;
     }
 
+    if (useDefaults) this.saveOptions(game.metadata.id,defaultGameOptions(game.metadata.id));
     const decision = canStartGame({
       players: this.getPlayers(),
       hostPlayerId: this.state.hostPlayerId,
@@ -230,7 +256,7 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
   }
 
   private beginGame(game: AnyGameDefinition): boolean {
-    const context = this.createGameContext();
+    const context = this.createGameContext(game.metadata.id);
     const started = game.start(game.createInitialState(context), context);
     if (!started.ok) return false;
 
@@ -360,6 +386,11 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
       this.state.activeGame.mode = this.activeGameDefinition.metadata.id === 'estimate'
         ? `${getStringProperty(publicView, 'dailyId') ? `daily:${getStringProperty(publicView, 'dailyId')}:` : ''}estimate:${getStringProperty(publicView, 'deck')}:${getStringProperty(publicView, 'difficulty')}:${participation}`
         : participation;
+      const id=this.activeGameDefinition.metadata.id;
+      const options=this.optionsFor(id);
+      if (!getStringProperty(publicView,"dailyId") && (options["rounds"] !== defaultGameOptions(id)["rounds"] || (id==="human-exe" && options["difficulty"]!=="standard"))) {
+        this.state.activeGame.mode=`custom:${options["rounds"]}:${id==="human-exe" ? options["difficulty"] : "standard"}:${this.state.activeGame.mode}`;
+      }
     }
 
     this.state.activeGame.gameId = this.activeGameDefinition.metadata.id;
@@ -444,8 +475,9 @@ export class NightshiftRoom extends Room<{ state: NightshiftRoomState }> {
     }
   }
 
-  private createGameContext(): GameContext {
+  private createGameContext(gameId = this.state.selectedGameId): GameContext {
     return {
+      gameOptions: this.optionsFor(gameId),
       players: new Map(this.getPlayers().map((player) => [player.id, player])),
       now: Date.now(),
       random: Math.random,

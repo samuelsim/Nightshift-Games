@@ -17,7 +17,7 @@ import { gameStyles } from '../game-styles';
               <h2>{{ game.question }}</h2>
               @if (game.soloPlayerId === playerId()) {
                 <div class="dual-status" aria-live="polite"><span [class.online]="humanChoice() !== null">♥ HUMAN {{ humanChoice() !== null ? 'assigned' : 'waiting' }}</span><span [class.online]="machineChoice() !== null">▣ MACHINE {{ machineChoice() !== null ? 'assigned' : 'waiting' }}</span></div>
-                <p>Assign one response to each system. Leave the remaining {{ game.options.length === 3 ? 'decoy' : 'decoys' }} unassigned.</p>
+                <p>Assign one response to each system. @if (game.options.length > 2) { Leave the remaining {{ game.options.length === 3 ? 'decoy' : 'decoys' }} unassigned. }</p>
                 <div class="response-deck">@for (option of game.options; track $index) {
                   <div class="response-card" [class.human-card]="humanChoice() === $index" [class.machine-card]="machineChoice() === $index">
                     <span class="response-number" aria-hidden="true">0{{ $index + 1 }}</span><p>{{ option }}</p>

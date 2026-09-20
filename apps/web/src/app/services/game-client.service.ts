@@ -91,8 +91,8 @@ export class GameClientService {
     this.send({ type: 'VOTE_NEXT_GAME', gameId });
   }
 
-  startGame(): void {
-    this.send({ type: 'START_GAME' });
+  startGame(useDefaults = false): void {
+    this.send({ type: 'START_GAME', useDefaults });
   }
 
   returnToLobby(): void {
@@ -179,6 +179,7 @@ function snapshotRoomState(state: NightshiftRoomState, games: readonly GameMetad
     phase: state.phase as RoomView['phase'],
     hostPlayerId: state.hostPlayerId,
     selectedGameId: state.selectedGameId,
+    gameOptions: JSON.parse(state.gameOptionsJson || '{}'),
     estimateOptions: { daily: state.estimateDaily, deck: state.estimateDeck as import('@nightshift/protocol').EstimateDeck, difficulty: state.estimateDifficulty as 'easy' | 'standard' | 'hard' },
     players,
     games,

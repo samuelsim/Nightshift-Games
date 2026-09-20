@@ -12,7 +12,7 @@ import { GameScoresComponent } from '../../shared/game-scores.component';
   textarea{resize:vertical;min-height:110px;padding:.8rem;border:1px solid var(--line);border-radius:10px;background:var(--surface-strong);color:var(--text);font:inherit;width:100%;box-sizing:border-box}.signal-note{color:var(--cyan);font-size:.8rem} @keyframes transmission-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 `],template:`
   @if (view(); as game) {
-    <article><header><p>Round {{ game.round }} / 3</p><h1>Human.exe: Infiltrator</h1></header>
+    <article><header><p>Round {{ game.round }} / {{ game.maxRounds }}</p><h1>Human.exe: Infiltrator</h1></header>
       <section>
         @if (game.phase !== 'REVEAL' && game.phase !== 'RESULTS') {
           @if (privateReady()) {
@@ -54,7 +54,7 @@ import { GameScoresComponent } from '../../shared/game-scores.component';
             <div class="transmission" [class.detected]="result.authors[card.id] === result.machine"><small>{{ card.id }} · {{ name(result.authors[card.id]!) }} · {{ result.authors[card.id] === result.machine ? 'MACHINE' : 'HUMAN' }}</small><p>{{ card.text }}</p></div>
           }</div>
           @for (id of game.participants; track id) { <div class="row"><span>{{ name(id) }} → {{ result.votes[id] ? 'Card ' + result.votes[id] : 'No vote' }}</span><b>+{{ result.points[id] ?? 0 }}</b></div> }
-          @if (isHost()) { <button class="primary" (click)="next()">{{ game.round === 3 ? 'Final scores' : 'Next round' }}</button> } @else { <p>Waiting for the host to continue.</p> }
+          @if (isHost()) { <button class="primary" (click)="next()">{{ game.round === game.maxRounds ? 'Final scores' : 'Next round' }}</button> } @else { <p>Waiting for the host to continue.</p> }
         }
         @if (game.phase === 'RESULTS') { <h2>Transmission complete</h2><p>Identity checks finished. Trust issues may persist.</p> }
       </section><ns-game-scores [room]="room()" [scores]="game.scores" />

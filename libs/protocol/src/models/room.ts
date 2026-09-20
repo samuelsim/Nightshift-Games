@@ -1,3 +1,4 @@
+export * from './game-options';
 import type { GameMetadata } from './game-metadata';
 import type { Player } from './player';
 
@@ -25,6 +26,7 @@ export interface ActiveGameView {
 }
 
 export interface RoomView {
+  readonly gameOptions?: Readonly<Record<string, import('./game-options').GameOptions>>;
   readonly estimateOptions?: EstimateOptions;
   readonly code: string;
   readonly phase: RoomPhase;

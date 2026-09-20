@@ -50,6 +50,7 @@ export function roomFeedback(previous: RoomView | null, next: RoomView, playerId
   }
   if (playerId && next.nextGameVotes[playerId] !== previous.nextGameVotes[playerId] && next.nextGameVotes[playerId]) return { cue: 'lock', text: 'Next-game vote saved' };
   if (next.phase === 'LOBBY') {
+    if (JSON.stringify(next.gameOptions)!==JSON.stringify(previous.gameOptions)) return {cue:'lock',text:next.players.filter(p=>p.connected).length>1 ? 'Settings saved · Guests, ready up again' : 'Settings saved'};
     if (next.selectedGameId !== previous.selectedGameId) return { cue: 'tap', text: `${next.games.find(g => g.id === next.selectedGameId)?.name ?? 'Game'} selected` };
     if (next.players.find(p => p.id === playerId)?.ready && !previous.players.find(p => p.id === playerId)?.ready) return { cue: 'lock', text: 'You’re ready · Let the games begin' };
     if (next.players.filter(p => p.connected).length > previous.players.filter(p => p.connected).length) return { cue: 'tap', text: 'A player joined the room' };

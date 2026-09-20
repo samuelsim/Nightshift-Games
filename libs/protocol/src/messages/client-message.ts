@@ -10,6 +10,7 @@ export interface SelectGameMessage {
 
 export interface StartGameMessage {
   readonly type: 'START_GAME';
+  readonly useDefaults?: boolean;
 }
 
 export interface ReturnToLobbyMessage {
@@ -22,6 +23,7 @@ export interface GameActionMessage {
 }
 
 export type ClientMessage =
+  | {readonly type:'SET_GAME_OPTIONS'; readonly gameId:string; readonly options:import('../models/game-options').GameOptions}
   | { readonly type: 'SET_ESTIMATE_OPTIONS'; readonly deck: import('../models/room').EstimateDeck; readonly difficulty: 'easy' | 'standard' | 'hard'; readonly daily?: boolean }
   | { readonly type: 'VOTE_NEXT_GAME'; readonly gameId: string }
   | SetReadyMessage

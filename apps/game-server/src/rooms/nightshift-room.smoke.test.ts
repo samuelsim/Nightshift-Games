@@ -16,6 +16,58 @@ import type { InfiltratorPublicView, InfiltratorPlayerView } from '@nightshift/g
 let activeServer: Server | null = null;
 
 describe('NightshiftRoom smoke flow', () => {
+  it('validates shared settings, preserves readiness on no-op edits and honors default starts', async () => {
+    const {client}=await startServer();
+    const host=await client.create<NightshiftRoomState>('nightshift_room',{nickname:'Host'});
+    const guest=await client.joinById<NightshiftRoomState>(host.roomId,{nickname:'Guest'});
+    const errors: ServerMessage[]=[];
+    for(const room of [host,guest]) room.onMessage('serverMessage',(message:ServerMessage)=>errors.push(message));
+    host.send('clientMessage',{type:'SELECT_GAME',gameId:'estimate'});
+    await waitFor(()=>guest.state.selectedGameId==='estimate');
+    guest.send('clientMessage',{type:'SET_READY',ready:true});
+    await waitFor(()=>host.state.players.get(guest.sessionId)?.ready===true);
+    guest.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:1}});
+    host.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:11}});
+    await waitFor(()=>errors.length>=2);
+    assert.equal(host.state.gameOptionsJson,'{}');
+    host.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:5}});
+    host.send('clientMessage',{type:'START_GAME'});
+    await waitFor(()=>host.state.phase==='PLAYING');
+    assert.equal(JSON.parse(host.state.activeGame.publicViewJson).maxRounds,5);
+    host.send('clientMessage',{type:'RETURN_TO_LOBBY'});
+    await waitFor(()=>host.state.phase==='LOBBY');
+    guest.send('clientMessage',{type:'SET_READY',ready:true});
+    await waitFor(()=>host.state.players.get(guest.sessionId)?.ready===true);
+    host.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:1,deck:'mixed'}});
+    await waitFor(()=>JSON.parse(guest.state.gameOptionsJson).estimate?.rounds===1);
+    assert.equal(host.state.players.get(host.sessionId)?.ready,true);
+    assert.equal(host.state.players.get(guest.sessionId)?.ready,false);
+    guest.send('clientMessage',{type:'SET_READY',ready:true});
+    await waitFor(()=>host.state.players.get(guest.sessionId)?.ready===true);
+    host.send('clientMessage',{type:'START_GAME'});
+    await waitFor(()=>host.state.phase==='PLAYING');
+    assert.equal(JSON.parse(host.state.activeGame.publicViewJson).maxRounds,1);
+    assert.equal(host.state.activeGame.mode,'custom:1:standard:estimate:mixed:standard:multiplayer');
+    const before=errors.length;
+    host.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:10}});
+    await waitFor(()=>errors.length>before);
+    assert.equal(JSON.parse(host.state.gameOptionsJson).estimate.rounds,1);
+    host.send('clientMessage',{type:'RETURN_TO_LOBBY'});
+    await waitFor(()=>host.state.phase==='LOBBY');
+    guest.send('clientMessage',{type:'SET_READY',ready:true});
+    await waitFor(()=>host.state.players.get(guest.sessionId)?.ready===true);
+    host.send('clientMessage',{type:'START_GAME',useDefaults:true});
+    await waitFor(()=>JSON.parse(host.state.gameOptionsJson).estimate.rounds===5);
+    assert.equal(host.state.phase,'LOBBY');
+    assert.equal(host.state.players.get(guest.sessionId)?.ready,false);
+    await guest.leave();
+    host.send('clientMessage',{type:'SET_GAME_OPTIONS',gameId:'estimate',options:{rounds:2}});
+    host.send('clientMessage',{type:'START_GAME',useDefaults:true});
+    await waitFor(()=>host.state.phase==='PLAYING');
+    assert.equal(JSON.parse(host.state.activeGame.publicViewJson).maxRounds,5);
+    assert.equal(JSON.parse(host.state.activeGame.publicViewJson).deck,'generated');
+    await host.leave();
+  });
   it('keeps the host ready across settings, game changes and lobby returns without a ready action', async () => {
     const {client}=await startServer();
     const host=await client.create<NightshiftRoomState>('nightshift_room',{nickname:'Host'});

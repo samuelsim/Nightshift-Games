@@ -2,6 +2,15 @@ import { strict as assert } from 'node:assert';
 import { it } from 'node:test';
 import { emptyStats, parseStats, recordRun, validRecordMode } from '../src/app/services/personal-stats';
 
+it('keeps custom lengths and Human.exe difficulty records separate from defaults', () => {
+  let book=emptyStats();
+  const modes=['solo','custom:1:standard:solo','custom:10:standard:solo','custom:5:easy:solo'];
+  for(const mode of modes) book=recordRun(book,{key:mode,gameId:'human-exe',mode,score:200});
+  assert.equal(book.records.length,4);
+  assert.deepEqual(parseStats(JSON.stringify(book)),book);
+  for(const mode of ['custom:0:standard:solo','custom:11:standard:solo','custom:5:hard:solo','custom:5:easy:custom:5:easy:solo']) assert.equal(validRecordMode(mode),false);
+});
+
 it('persists bests and totals without recounting a refreshed final scoreboard', () => {
   const run={key:'unique-run:player',gameId:'estimate',mode:'solo',score:5000};
   const book=recordRun(emptyStats(),run);

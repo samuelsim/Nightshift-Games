@@ -6,6 +6,10 @@ export const emptyStats = (): StatsBook => ({version:1,records:[],seen:[]});
 export const isDailyMode = (mode: string): boolean => typeof mode === 'string' && mode.startsWith('daily:');
 export function validRecordMode(mode: string): boolean {
   if (typeof mode !== 'string') return false;
+  if (mode.startsWith('custom:')) {
+    const match=/^custom:([1-9]|10):(easy|standard):(.+)$/.exec(mode);
+    return !!match && !match[3]!.startsWith('custom:') && !isDailyMode(match[3]!) && validRecordMode(match[3]!);
+  }
   if (['solo','multiplayer','mixed'].includes(mode) || /^estimate:(generated|facts|earth|wildlife|mixed):(easy|standard|hard):(solo|multiplayer|mixed)$/.test(mode)) return true;
   const match = /^daily:v\d{1,4}:(\d{4}-\d{2}-\d{2}):estimate:(generated|facts|earth|wildlife|mixed):(easy|standard|hard):(solo|multiplayer|mixed)$/.exec(mode);
   if (!match) return false;
@@ -13,6 +17,10 @@ export function validRecordMode(mode: string): boolean {
   return Number.isFinite(time) && new Date(time).toISOString().slice(0,10) === match[1];
 }
 export function recordModeLabel(mode: string): string {
+  if (mode.startsWith('custom:')) {
+    const [,rounds,difficulty,...base]=mode.split(':');
+    return `${rounds} rounds · ${difficulty==='easy' ? 'easy · ' : ''}${recordModeLabel(base.join(':'))}`;
+  }
   if (isDailyMode(mode)) {
     const [,version,date,...regular] = mode.split(':');
     return `${date} UTC · ${recordModeLabel(regular.join(':'))} · ${version}`;

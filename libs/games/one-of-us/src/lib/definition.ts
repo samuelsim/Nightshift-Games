@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import { getConnectedPlayers, shuffled, type GameContext, type GameDefinition, type GameActionResult } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
 import { oneOfUsMetadata } from './metadata';
@@ -33,7 +34,7 @@ export const oneOfUsDefinition: GameDefinition<OneOfUsState, PlayerAction, OneOf
   createInitialState(ctx) {
     const participants = getConnectedPlayers(ctx.players).map(p => p.id);
     const bluffer = shuffled(participants, ctx.random)[0] ?? '';
-    return { phase: 'CLUES', round: 1, deck: shuffled(wordCards, ctx.random).slice(0, 3), participants,
+    return { phase: 'CLUES', round: 1, deck: shuffled(wordCards, ctx.random).slice(0, gameRounds('one-of-us',ctx.gameOptions)), participants,
       bluffer, usedBluffers: [bluffer], timerEndsAt: ctx.now + 30_000, clues: {}, discussion: [],
       messageCounts: {}, lastMessageAt: {}, votes: {}, scores: {}, result: null };
   },

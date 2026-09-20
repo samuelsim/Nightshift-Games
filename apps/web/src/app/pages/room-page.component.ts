@@ -1,3 +1,5 @@
+import { GameSettingsComponent } from '../shared/game-settings.component';
+import { defaultGameOptions, effectiveGameOptions, type GameOptions } from '@nightshift/protocol/room';
 import { InfiltratorComponent } from '../games/human-exe/infiltrator.component';
 import { HostStatusComponent } from '../shared/host-status.component';
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
@@ -26,7 +28,7 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
 @Component({
   selector: 'ns-room-page',
   standalone: true,
-  imports: [InfiltratorComponent, HostStatusComponent, FormsModule, AvatarPickerComponent, PlayerListComponent, PickNumberComponent, EstimateComponent, RestrictedCluesComponent, HumanExeComponent, MajorityRulesComponent, OneOfUsComponent, NextGameComponent, RoundStatusComponent, LucideAngularModule, GameArtComponent, GameHelpComponent, RoundOutcomeComponent, GameStageComponent],
+  imports: [GameSettingsComponent,InfiltratorComponent, HostStatusComponent, FormsModule, AvatarPickerComponent, PlayerListComponent, PickNumberComponent, EstimateComponent, RestrictedCluesComponent, HumanExeComponent, MajorityRulesComponent, OneOfUsComponent, NextGameComponent, RoundStatusComponent, LucideAngularModule, GameArtComponent, GameHelpComponent, RoundOutcomeComponent, GameStageComponent],
   template: `
     <main class="room-shell">
       @if (!room()) {
@@ -102,41 +104,13 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
               </div>
 
               <p class="selected-description">{{ selectedGameTagline() }}</p>
-              @if (room()?.selectedGameId === 'estimate') {
-                <fieldset class="estimate-options" [disabled]="!client.isHost()">
-                  <legend>Estimate settings</legend>
-                  <label>Play style
-                    <select [ngModel]="room()?.estimateOptions?.daily ? 'daily' : 'regular'" (ngModelChange)="setEstimateDaily($event === 'daily')">
-                      <option value="regular">Fresh shuffle</option>
-                      <option value="daily">Daily challenge</option>
-                    </select>
-                  </label>
-                  <label>Question deck
-                    <select [ngModel]="room()?.estimateOptions?.deck || 'generated'" (ngModelChange)="setEstimateDeck($event)">
-                      <option value="generated">Quantities</option>
-                      <option value="mixed">Mixed Trivia</option>
-                      <option value="facts">Space Facts</option>
-                      <option value="earth">Earth &amp; Ocean</option>
-                      <option value="wildlife">Wildlife</option>
-                    </select>
-                  </label>
-                  <label>Difficulty
-                    <select [ngModel]="room()?.estimateOptions?.difficulty || 'standard'" (ngModelChange)="setEstimateDifficulty($event)">
-                      <option value="easy">Easy · warm up</option>
-                      <option value="standard">Standard · trust your gut</option>
-                      <option value="hard">Hard · stretch your intuition</option>
-                    </select>
-                  </label>
-                  <p class="settings-note">5 rounds · 30s each. Changing settings resets guests’ ready status.</p>
-                  @if (!room()?.estimateOptions?.daily) { <p class="settings-note">Unseen questions first. Mixed Trivia has the most variety.</p> }
-                  @if (room()?.estimateOptions?.daily) { <p class="settings-note">Same set on replay. New sets at 00:00 UTC; first and best scores saved.</p> }
-                </fieldset>
-              }
+              <ns-game-settings [gameId]="room()?.selectedGameId || 'pick-number'" [options]="selectedOptions()" [isHost]="client.isHost()" (optionsChange)="changeOptions($event)" />
               @if (client.isHost()) {
                 <button type="button" class="primary start" (click)="client.startGame()">
                   <lucide-icon [img]="Play" aria-hidden="true" />
-                  <span>Start {{ selectedGameName() }}</span>
+                  <span>{{ hasCustomOptions() ? 'Start ' : 'Quick start · ' }}{{ selectedGameName() }}</span>
                 </button>
+                @if (hasCustomOptions()) { <button type="button" (click)="startDefaults()">{{ hasGuests() ? 'Use defaults' : 'Quick start · defaults' }}</button> }
               }
             </section>
           </section>
@@ -214,11 +188,6 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
         padding: 1rem;
       }
 
-      .estimate-options { display:grid;gap:.65rem;margin:.25rem 0;padding:.8rem;border:1px solid var(--gold);border-radius:14px;background:var(--surface-strong);min-width:0; }
-      .estimate-options legend { font-weight:900;color:var(--gold);padding:0 .5rem; }
-      .estimate-options label { display:grid;gap:.4rem;font-weight:800; }
-      .estimate-options select { width:100%;min-width:0;min-height:48px;padding:.7rem;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font:inherit; }
-      .estimate-options p { margin:0;color:var(--muted);font-size:.85rem;line-height:1.6; }
       .join-card,
       .panel,
       .qr-panel {
@@ -414,14 +383,15 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
   ]
 })
 export class RoomPageComponent implements OnInit {
-  setEstimateDeck(deck: import('@nightshift/protocol').EstimateDeck): void {
-    this.client.send({type:'SET_ESTIMATE_OPTIONS',deck,difficulty:this.room()?.estimateOptions?.difficulty ?? 'standard',daily:!!this.room()?.estimateOptions?.daily});
+  protected readonly selectedOptions = computed(()=>effectiveGameOptions(this.room()?.selectedGameId ?? 'pick-number',this.room()?.gameOptions?.[this.room()?.selectedGameId ?? 'pick-number']));
+  protected readonly hasCustomOptions = computed(()=>JSON.stringify(this.selectedOptions())!==JSON.stringify(defaultGameOptions(this.room()?.selectedGameId ?? 'pick-number')));
+  protected readonly hasGuests = computed(()=>this.room()?.players.some(player=>player.connected && player.id!==this.room()?.hostPlayerId) ?? false);
+  protected changeOptions(options: GameOptions): void {
+    this.client.send({type:'SET_GAME_OPTIONS',gameId:this.room()?.selectedGameId ?? 'pick-number',options});
   }
-  setEstimateDifficulty(difficulty: 'easy' | 'standard' | 'hard'): void {
-    this.client.send({type:'SET_ESTIMATE_OPTIONS',difficulty,deck:this.room()?.estimateOptions?.deck ?? 'generated',daily:!!this.room()?.estimateOptions?.daily});
-  }
-  setEstimateDaily(daily: boolean): void {
-    this.client.send({type:'SET_ESTIMATE_OPTIONS',daily,deck:this.room()?.estimateOptions?.deck ?? 'generated',difficulty:this.room()?.estimateOptions?.difficulty ?? 'standard'});
+  protected startDefaults(): void {
+    if (this.hasGuests()) this.changeOptions(defaultGameOptions(this.room()?.selectedGameId ?? 'pick-number'));
+    else this.client.startGame(true);
   }
   protected readonly soloMode = computed(()=>{
     const room=this.room();

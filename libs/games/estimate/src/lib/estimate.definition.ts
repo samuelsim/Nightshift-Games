@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import { estimateMetadata } from './metadata';
 import type { GameActionResult, GameContext, GameDefinition } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
@@ -13,9 +14,10 @@ export const estimateDefinition: GameDefinition<EstimateState, PlayerAction, Est
     const difficulty = context.estimateOptions?.difficulty ?? 'standard';
     const dailyId = context.estimateOptions?.daily ? dailyIdentity(context.now) : '';
     const random = dailyId ? dailyRandom(dailyId, deck, difficulty) : context.random;
+    const count = dailyId ? 5 : gameRounds('estimate',context.gameOptions);
     const previous = dailyId ? [] : context.previousEstimateQuestions ?? [];
     return { deck, difficulty, dailyId, phase: 'SUBMISSION', round: 1, timerEndsAt: context.now + 30_000,
-      prompts: deck === 'generated' ? createPrompts(random, difficulty, previous) : createFactPrompts(random, difficulty, deck, previous),
+      prompts: deck === 'generated' ? createPrompts(random, difficulty, previous, count) : createFactPrompts(random, difficulty, deck, previous, count),
       submissions: {}, scores: dailyId ? Object.fromEntries([...context.players.values()].filter(p=>p.connected).map(p=>[p.id,0])) : {}, streaks: {}, history: [] };
   },
   start: (state) => ({ ok: true, state }),

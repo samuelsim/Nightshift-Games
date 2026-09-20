@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import type { GameContext, GameDefinition, GameActionResult } from '@nightshift/game-core';
 import { shuffled } from '@nightshift/game-core';
 import type { PlayerAction } from '@nightshift/protocol';
@@ -43,7 +44,7 @@ export const infiltratorDefinition: GameDefinition<InfiltratorState,PlayerAction
   metadata:infiltratorMetadata,
   createInitialState(ctx) {
     const participants=connected(ctx), machine=shuffled(participants,ctx.random)[0]??'';
-    return {phase:'SUBMISSION',round:1,deck:shuffled(prompts,ctx.random).slice(0,3),participants,machine,usedMachines:[machine],codeWord:word(ctx),timerEndsAt:ctx.now+30_000,responses:{},cards:[],authors:{},votes:{},scores:{},result:null};
+    return {phase:'SUBMISSION',round:1,deck:shuffled(prompts,ctx.random).slice(0, gameRounds('human-infiltrator',ctx.gameOptions)),participants,machine,usedMachines:[machine],codeWord:word(ctx),timerEndsAt:ctx.now+30_000,responses:{},cards:[],authors:{},votes:{},scores:{},result:null};
   },
   start:(state,ctx)=>connected(ctx).length>=3?{ok:true,state}:reject(state,'need_players','Infiltrator needs at least three players.'),
   handleAction(state,id,action,ctx) {
@@ -53,7 +54,7 @@ export const infiltratorDefinition: GameDefinition<InfiltratorState,PlayerAction
       if (id!==ctx.hostPlayerId) return reject(state,'host_only','Only the host can continue.');
       if (state.phase!=='REVEAL') return reject(state,'wrong_phase','Wait for the reveal.');
       const participants=connected(ctx);
-      if (state.round===3 || participants.length<3) return {ok:true,state:{...state,phase:'RESULTS'}};
+      if (state.round===state.deck.length || participants.length<3) return {ok:true,state:{...state,phase:'RESULTS'}};
       let usedMachines=state.usedMachines;
       let candidates=participants.filter(p=>!usedMachines.includes(p));
       if (!candidates.length) {usedMachines=[];candidates=participants;}
@@ -82,7 +83,7 @@ export const infiltratorDefinition: GameDefinition<InfiltratorState,PlayerAction
   },
   tick:(state,ctx)=>({ok:true,state:tick(state,ctx)}),
   isFinished:state=>state.phase==='RESULTS',
-  getPublicView:state=>({phase:state.phase,round:state.round,maxRounds:3,question:state.deck[state.round-1]!,timerEndsAt:state.timerEndsAt,participants:state.participants,submittedPlayerIds:Object.keys(state.responses),votedPlayerIds:Object.keys(state.votes),cards:state.cards,scores:state.scores,result:state.result}),
+  getPublicView:state=>({phase:state.phase,round:state.round,maxRounds:state.deck.length,question:state.deck[state.round-1]!,timerEndsAt:state.timerEndsAt,participants:state.participants,submittedPlayerIds:Object.keys(state.responses),votedPlayerIds:Object.keys(state.votes),cards:state.cards,scores:state.scores,result:state.result}),
   getPlayerView:(state,id)=>({round:state.round,role:!state.participants.includes(id)?null:id===state.machine?'MACHINE':'HUMAN',codeWord:id===state.machine?state.codeWord:null,response:state.responses[id]??null,ownCard:Object.keys(state.authors).find(key=>state.authors[key]===id)??null,vote:state.votes[id]??null})
 };
 

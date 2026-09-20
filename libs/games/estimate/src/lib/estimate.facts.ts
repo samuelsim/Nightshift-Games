@@ -40,11 +40,11 @@ export const factDeck: readonly Fact[] = [
   fact('sun-radius', 'hard', 'sun', 'What is the Sun’s approximate radius?', 'kilometres', 700000, 'NASA rounds the solar radius to about 700,000 kilometres.')
 ];
 
-export function createFactPrompts(random: () => number, difficulty: Difficulty, deck: 'facts' | 'earth' | 'wildlife' | 'mixed' = 'facts', previous: readonly string[] = []): readonly EstimatePrompt[] {
+export function createFactPrompts(random: () => number, difficulty: Difficulty, deck: 'facts' | 'earth' | 'wildlife' | 'mixed' = 'facts', previous: readonly string[] = [], count = 5): readonly EstimatePrompt[] {
   const cards = (deck === 'mixed' ? [...factDeck,...earthDeck,...wildlifeDeck] : deck === 'earth' ? earthDeck : deck === 'wildlife' ? wildlifeDeck : factDeck).filter(card => card.difficulty === difficulty);
   for (let i = cards.length - 1; i > 0; i--) {
     const j = randomIntInclusive(random, 0, i);
     [cards[i], cards[j]] = [cards[j]!, cards[i]!];
   }
-  return selectPrompts(cards,random,previous);
+  return selectPrompts(cards,random,previous,count);
 }

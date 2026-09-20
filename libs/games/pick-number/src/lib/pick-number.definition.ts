@@ -1,3 +1,4 @@
+import { gameRounds } from '@nightshift/protocol';
 import { pickNumberMetadata } from './metadata';
 import type { GameContext, GameDefinition, GameActionResult } from '@nightshift/game-core';
 import { getConnectedPlayers } from '@nightshift/game-core';
@@ -11,7 +12,7 @@ import {
 
 type PickNumberAction = PickNumberSubmitAction | PickNumberNextRoundAction;
 
-const maxRounds = 3;
+
 
 export const pickNumberDefinition: GameDefinition<
   PickNumberState,
@@ -87,7 +88,7 @@ export function createPickNumberState(context: GameContext): PickNumberState {
     ...soloSetup(context),
     phase: 'SUBMISSION',
     round: 1,
-    maxRounds,
+    maxRounds: gameRounds('pick-number',context.gameOptions),
     target: null,
     submissions: {},
     scores,

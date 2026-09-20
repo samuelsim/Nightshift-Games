@@ -67,7 +67,7 @@ import { estimateDeckLabels } from '@nightshift/protocol/room';
         }
         @if (game.phase === 'RESULTS') {
           <section>
-            <h2>Shift complete</h2><p>Five guesses. Plenty to talk about.</p>
+            <h2>Shift complete</h2><p>{{ game.maxRounds }} rounds complete.</p>
             @for (score of standings(); track score.id) {
               <div class="result"><b>{{ name(score.id) }}</b><b>{{ score.score | number }} points</b></div>
             }

@@ -1,6 +1,7 @@
 import type { Player, PlayerId } from '@nightshift/protocol';
 
 export interface GameContext {
+  readonly gameOptions?: import('@nightshift/protocol').GameOptions;
   readonly previousEstimateQuestions?: readonly string[];
   readonly previousHumanQuestions?: readonly string[];
   readonly estimateOptions?: import('@nightshift/protocol').EstimateOptions;
