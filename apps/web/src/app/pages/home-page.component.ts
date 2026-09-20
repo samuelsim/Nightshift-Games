@@ -27,7 +27,7 @@ import { Moon, LogIn, Plus, LucideAngularModule } from 'lucide-angular';
       <section class="join-panel">
         <label>
           Nickname
-          <input [(ngModel)]="nickname" maxlength="24" autocomplete="nickname" placeholder="Samuel" />
+          <input [(ngModel)]="nickname" maxlength="24" autocomplete="nickname" placeholder="Night Owl" />
         </label>
 
         <label>
