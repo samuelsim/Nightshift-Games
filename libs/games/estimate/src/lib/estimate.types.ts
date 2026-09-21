@@ -1,6 +1,10 @@
 import type { PlayerId } from '@nightshift/protocol';
 
+export type EstimateArtSubject = 'sun' | 'moon' | 'mercury' | 'venus' | 'earth' | 'mars' | 'jupiter' | 'saturn' | 'uranus' | 'neptune';
+
 export interface EstimatePrompt {
+  /** Authored subject only. Never infer art from answers or private state. */
+  readonly art?: EstimateArtSubject;
   readonly source?: { readonly title: string; readonly url: string; readonly reviewedAt: string };
   readonly convention?: string;
   readonly question: string;
@@ -45,7 +49,7 @@ export interface EstimatePublicView {
   readonly phase: EstimateState['phase'];
   readonly round: number;
   readonly maxRounds: number;
-  readonly prompt: Pick<EstimatePrompt, 'question' | 'unit' | 'convention'>;
+  readonly prompt: Pick<EstimatePrompt, 'question' | 'unit' | 'convention' | 'art'>;
   readonly submittedPlayerIds: readonly PlayerId[];
   readonly scores: EstimateState['scores'];
   readonly latestResult: EstimateResult | null;

@@ -46,9 +46,9 @@ export const estimateDefinition: GameDefinition<EstimateState, PlayerAction, Est
   tick: (state, context) => ({ ok: true, state: maybeReveal(state, context) }),
   isFinished: (state) => state.phase === 'RESULTS',
   getPublicView(state) {
-    const { question, unit, convention } = state.prompts[state.round - 1]!;
+    const { question, unit, convention, art } = state.prompts[state.round - 1]!;
     return { deck: state.deck, difficulty: state.difficulty, dailyId: state.dailyId, phase: state.phase, round: state.round, maxRounds: state.prompts.length, timerEndsAt: state.timerEndsAt,
-      prompt: { question, unit, ...(convention ? { convention } : {}) }, submittedPlayerIds: Object.keys(state.submissions), scores: state.scores,
+      prompt: { question, unit, ...(convention ? { convention } : {}), ...(art ? { art } : {}) }, submittedPlayerIds: Object.keys(state.submissions), scores: state.scores,
       latestResult: state.history.at(-1) ?? null, history: state.history };
   },
   getPlayerView: (state, playerId) => ({ round: state.round, submittedValue: state.submissions[playerId] ?? null })

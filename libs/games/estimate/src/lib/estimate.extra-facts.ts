@@ -1,11 +1,11 @@
-import type { EstimatePrompt } from './estimate.types';
+import type { EstimatePrompt, EstimateArtSubject } from './estimate.types';
 type Tier = 'easy'|'standard'|'hard';
 type Card = EstimatePrompt & {readonly id:string; readonly difficulty:Tier};
 const make=(id:string,difficulty:Tier,question:string,unit:string,answer:number,explanation:string,url:string,title:string):Card=>({
   id,difficulty,question,unit,answer,explanation,source:{url,title,reviewedAt:'2026-09-19'},
   convention:'Use the displayed units and the rounded reference value. Close estimates earn points.'
 });
-const planet=(id:string,t:Tier,q:string,u:string,a:number,e:string,body:string)=>make(id,t,q,u,a,e,`https://science.nasa.gov/${body}/${['venus','neptune'].includes(body)?body+'-facts':'facts'}/`,`NASA Science · ${body} facts`);
+const planet=(id:string,t:Tier,q:string,u:string,a:number,e:string,body:EstimateArtSubject):Card=>({...make(id,t,q,u,a,e,`https://science.nasa.gov/${body}/${['venus','neptune'].includes(body)?body+'-facts':'facts'}/`,`NASA Science · ${body} facts`),art:body});
 export const extraSpace:readonly Card[]=[
   planet('mercury-year','easy','About how many Earth days make a year on Mercury?','Earth days',88,'Mercury completes an orbit in about 88 days.','mercury'),
   planet('venus-heat','easy','About how hot is the surface of Venus in degrees Celsius?','°C',467,'NASA gives about 467 °C.','venus'),

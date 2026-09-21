@@ -18,6 +18,24 @@ function context(count = 2): GameContext {
 }
 
 describe('Estimate', () => {
+  it('assigns reviewed space subjects without disclosing answer data or inferring from comparison units', () => {
+    assert.equal(factDeck.length, 30);
+    for (const card of factDeck) {
+      assert.equal(card.art, card.source!.url.split('/')[3], card.id);
+      const ctx = context(1);
+      const state = { ...game.createInitialState(ctx), prompts: [card] };
+      const view = game.getPublicView(state, ctx);
+      assert.equal(view.prompt.art, card.art);
+      assert.deepEqual(Object.keys(view.prompt).sort(), ['art','convention','question','unit']);
+      const changed = game.getPublicView({ ...state, prompts: [{ ...card, answer: card.answer * 2 }] }, ctx);
+      assert.deepEqual(changed.prompt, view.prompt);
+    }
+    assert.equal(factDeck.find(card => card.id === 'moon-orbit')!.art, 'moon');
+    assert.equal(factDeck.find(card => card.id === 'mars-year')!.art, 'mars');
+    assert.equal(factDeck.find(card => card.id === 'moon-samples')!.art, 'moon');
+    const ctx = context(1);
+    assert.equal(game.getPublicView(game.createInitialState(ctx), ctx).prompt.art, undefined);
+  });
   it('plays six Mixed Trivia games before repeating any fact at a fixed difficulty', () => {
     assert.equal(new Set([...factDeck,...earthDeck,...wildlifeDeck].map(card=>card.id)).size,90);
     for(const difficulty of ['easy','standard','hard'] as const) {

@@ -1,6 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import type { RoomView } from '@nightshift/protocol';
 import { GameArtComponent } from './game-art.component';
+import { QuestionArtComponent } from './question-art.component';
+import type { EstimatePublicView } from '@nightshift/games-estimate';
 
 const themes: Record<string,{label:string;caption:string}> = {
   'human-infiltrator':{label:'ANONYMOUS SIGNALS',caption:'Someone is trying very hard to sound human.'},
@@ -11,9 +13,12 @@ const themes: Record<string,{label:string;caption:string}> = {
   'majority-rules':{label:'THE ROOM HAS OPINIONS',caption:'Pick a side. Read the room.'},
   'one-of-us':{label:'THE SUSPICION CLUB',caption:'Everybody looks a little suspicious.'}
 };
-@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent],template:`
+@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent,QuestionArtComponent],template:`
   <div class="stage" [attr.data-scene]="id()" [class.revealed]="room().activeGame?.phase === 'REVEAL'">
     <div class="scene" aria-hidden="true">
+      @if (questionSubject(); as subject) {
+        @for (key of artKeys(); track key) { <ns-question-art [subject]="subject" /> }
+      } @else {
       <svg viewBox="0 0 600 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         @switch (id()) {
           @case ('human-infiltrator') {
@@ -65,6 +70,7 @@ const themes: Record<string,{label:string;caption:string}> = {
         <path d="M195 131H406" opacity=".25"/>
       </svg>
       <ns-game-art [game]="id()" />
+      }
     </div>
     <div class="stage-caption"><strong>{{ theme()?.label }}</strong><span>{{ theme()?.caption }}</span></div>
   </div>
@@ -86,6 +92,15 @@ const themes: Record<string,{label:string;caption:string}> = {
 export class GameStageComponent {
   readonly room = input.required<RoomView>();
   readonly id = computed(()=>this.room().activeGame?.gameId ?? 'pick-number');
+  readonly questionSubject = computed(() => {
+    if (this.id() !== 'estimate') return undefined;
+    const view = this.room().activeGame?.publicView as EstimatePublicView | undefined;
+    return view?.phase === 'RESULTS' ? undefined : view?.prompt?.art;
+  });
+  readonly artKeys = computed(() => {
+    const view = this.room().activeGame?.publicView as EstimatePublicView | undefined;
+    return [String(view?.round) + ':' + view?.prompt?.question];
+  });
   readonly deck = computed(()=>(this.room().activeGame?.publicView as {deck?:string}|undefined)?.deck);
   readonly theme = computed(()=>this.id()==='estimate' ? ({
     earth:{label:'BLUE PLANET FIELD NOTES',caption:'From the surface to the deepest blue.'},

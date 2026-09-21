@@ -1,5 +1,5 @@
 import { randomIntInclusive } from '@nightshift/game-core';
-import type { EstimatePrompt } from './estimate.types';
+import type { EstimatePrompt, EstimateArtSubject } from './estimate.types';
 import { earthDeck, wildlifeDeck } from './estimate.topics';
 import { extraSpace } from './estimate.extra-facts';
 import { selectPrompts } from './estimate.selection';
@@ -12,8 +12,8 @@ const source = (body: string) => ({
   reviewedAt: '2026-09-15'
 });
 const convention = 'Use the stated units. Decimals are welcome; approximate values are scored by percentage error.';
-function fact(id: string, difficulty: Difficulty, body: string, question: string, unit: string, answer: number, explanation: string): Fact {
-  return { id, difficulty, question, unit, answer, explanation, convention, source: source(body) };
+function fact(id: string, difficulty: Difficulty, body: EstimateArtSubject, question: string, unit: string, answer: number, explanation: string): Fact {
+  return { id, difficulty, art: body, question, unit, answer, explanation, convention, source: source(body) };
 }
 
 // Server-only reviewed snapshot. No live requests, changing moon counts or current distances.
