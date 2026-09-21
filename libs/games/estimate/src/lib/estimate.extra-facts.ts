@@ -1,11 +1,13 @@
-import type { EstimatePrompt, EstimateArtSubject } from './estimate.types';
+import { earthArt } from './estimate.earth-art';
+import { spaceMeasures } from './estimate.space-art';
+import type { EstimatePrompt, EstimateSpaceSubject, EstimateAnimalSubject } from './estimate.types';
 type Tier = 'easy'|'standard'|'hard';
 type Card = EstimatePrompt & {readonly id:string; readonly difficulty:Tier};
 const make=(id:string,difficulty:Tier,question:string,unit:string,answer:number,explanation:string,url:string,title:string):Card=>({
-  id,difficulty,question,unit,answer,explanation,source:{url,title,reviewedAt:'2026-09-19'},
+  art: earthArt[id as keyof typeof earthArt],...(spaceMeasures[id] ? {artMeasure:spaceMeasures[id]} : {}),id,difficulty,question,unit,answer,explanation,source:{url,title,reviewedAt:'2026-09-19'},
   convention:'Use the displayed units and the rounded reference value. Close estimates earn points.'
 });
-const planet=(id:string,t:Tier,q:string,u:string,a:number,e:string,body:EstimateArtSubject):Card=>({...make(id,t,q,u,a,e,`https://science.nasa.gov/${body}/${['venus','neptune'].includes(body)?body+'-facts':'facts'}/`,`NASA Science · ${body} facts`),art:body});
+const planet=(id:string,t:Tier,q:string,u:string,a:number,e:string,body:EstimateSpaceSubject):Card=>({...make(id,t,q,u,a,e,`https://science.nasa.gov/${body}/${['venus','neptune'].includes(body)?body+'-facts':'facts'}/`,`NASA Science · ${body} facts`),art:body});
 export const extraSpace:readonly Card[]=[
   planet('mercury-year','easy','About how many Earth days make a year on Mercury?','Earth days',88,'Mercury completes an orbit in about 88 days.','mercury'),
   planet('venus-heat','easy','About how hot is the surface of Venus in degrees Celsius?','°C',467,'NASA gives about 467 °C.','venus'),
@@ -36,7 +38,7 @@ export const extraEarth:readonly Card[]=[
   ocean('ridge-length','hard','About how long is the global mid-ocean ridge system?','kilometres',65000,'The system stretches about 65,000 km.','midoceanridge'),
   ocean('ocean-age','hard','In NOAA’s account, the early ocean formed approximately how many BILLION years ago?','billion years',3.8,'The rounded estimate is 3.8 billion years.','why_oceans')
 ];
-const animal=(id:string,t:Tier,q:string,u:string,a:number,e:string,species:string)=>make(id,t,q,u,a,e,`https://nationalzoo.si.edu/animals/${species}`,`Smithsonian National Zoo · ${species.replaceAll('-',' ')}`);
+const animal=(id:string,t:Tier,q:string,u:string,a:number,e:string,species:EstimateAnimalSubject)=>({...make(id,t,q,u,a,e,`https://nationalzoo.si.edu/animals/${species}`,`Smithsonian National Zoo · ${species.replaceAll('-',' ')}`),art:species});
 export const extraWildlife:readonly Card[]=[
   animal('cheetah-pregnancy','easy','A cheetah’s pregnancy lasts approximately how many months?','months',3,'The reference gives about three months.','cheetah'),
   animal('panda-eyes','easy','At the upper end of the Smithsonian’s range, panda cubs first open their eyes at how many weeks old?','weeks',8,'The stated range is six to eight weeks.','giant-panda'),

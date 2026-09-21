@@ -1,9 +1,10 @@
-import type { EstimatePrompt } from './estimate.types';
+import { earthArt } from './estimate.earth-art';
+import type { EstimatePrompt, EstimateAnimalSubject } from './estimate.types';
 import { extraEarth, extraWildlife } from './estimate.extra-facts';
 type Tier = 'easy' | 'standard' | 'hard';
 type Card = EstimatePrompt & { readonly id:string; readonly difficulty:Tier };
 function card(id:string,difficulty:Tier,question:string,unit:string,answer:number,explanation:string,url:string,title:string):Card {
-  return {id,difficulty,question,unit,answer,explanation,source:{url,title,reviewedAt:'2026-09-16'},convention:'Use the displayed units. Approximate reference values are scored by percentage error; decimals are welcome.'};
+  return {art: earthArt[id as keyof typeof earthArt],id,difficulty,question,unit,answer,explanation,source:{url,title,reviewedAt:'2026-09-16'},convention:'Use the displayed units. Approximate reference values are scored by percentage error; decimals are welcome.'};
 }
 const noaa=(page:string)=>`https://oceanservice.noaa.gov/facts/${page}.html`;
 const earth='https://science.nasa.gov/earth/facts/';
@@ -29,7 +30,7 @@ export const earthDeck:readonly Card[]=[
   ocean('fresh-dense','hard','Freshwater is most dense at about what temperature in degrees Celsius?','°C',4,'Freshwater reaches its density maximum around 4 °C.','oceanfreeze'),
   ocean('southern-boundary','hard','NOAA describes the U.S. northern boundary of the Southern Ocean at how many degrees south?','degrees south',60,'This named boundary is 60° south; conventions differ internationally.','howmanyoceans')
 ];
-const animal=(id:string,t:Tier,q:string,u:string,a:number,e:string,species:string)=>card(id,t,q,u,a,e,`https://nationalzoo.si.edu/animals/${species}`,`Smithsonian National Zoo · ${species.replaceAll('-',' ')}`);
+const animal=(id:string,t:Tier,q:string,u:string,a:number,e:string,species:EstimateAnimalSubject)=>({...card(id,t,q,u,a,e,`https://nationalzoo.si.edu/animals/${species}`,`Smithsonian National Zoo · ${species.replaceAll('-',' ')}`),art:species});
 export const wildlifeDeck:readonly Card[]=[
   ...extraWildlife,
   animal('cheetah-strides','easy','At top speed, a cheetah completes roughly how many strides per second?','strides/second',4,'The Smithsonian describes four strides per second.','cheetah'),

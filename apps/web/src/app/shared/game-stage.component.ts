@@ -17,7 +17,7 @@ const themes: Record<string,{label:string;caption:string}> = {
   <div class="stage" [attr.data-scene]="id()" [class.revealed]="room().activeGame?.phase === 'REVEAL'">
     <div class="scene" aria-hidden="true">
       @if (questionSubject(); as subject) {
-        @for (key of artKeys(); track key) { <ns-question-art [subject]="subject" /> }
+        @for (key of artKeys(); track key) { <ns-question-art [subject]="subject" [measure]="questionMeasure()" /> }
       } @else {
       <svg viewBox="0 0 600 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         @switch (id()) {
@@ -101,6 +101,8 @@ export class GameStageComponent {
     const view = this.room().activeGame?.publicView as EstimatePublicView | undefined;
     return [String(view?.round) + ':' + view?.prompt?.question];
   });
+  readonly questionMeasure = computed(() => this.id() === 'estimate'
+    ? (this.room().activeGame?.publicView as EstimatePublicView | undefined)?.prompt?.artMeasure : undefined);
   readonly deck = computed(()=>(this.room().activeGame?.publicView as {deck?:string}|undefined)?.deck);
   readonly theme = computed(()=>this.id()==='estimate' ? ({
     earth:{label:'BLUE PLANET FIELD NOTES',caption:'From the surface to the deepest blue.'},

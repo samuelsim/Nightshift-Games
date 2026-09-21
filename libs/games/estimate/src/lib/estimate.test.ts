@@ -26,7 +26,7 @@ describe('Estimate', () => {
       const state = { ...game.createInitialState(ctx), prompts: [card] };
       const view = game.getPublicView(state, ctx);
       assert.equal(view.prompt.art, card.art);
-      assert.deepEqual(Object.keys(view.prompt).sort(), ['art','convention','question','unit']);
+      assert.deepEqual(Object.keys(view.prompt).sort(), ['art',...(card.artMeasure ? ['artMeasure'] : []),'convention','question','unit']);
       const changed = game.getPublicView({ ...state, prompts: [{ ...card, answer: card.answer * 2 }] }, ctx);
       assert.deepEqual(changed.prompt, view.prompt);
     }
@@ -34,7 +34,7 @@ describe('Estimate', () => {
     assert.equal(factDeck.find(card => card.id === 'mars-year')!.art, 'mars');
     assert.equal(factDeck.find(card => card.id === 'moon-samples')!.art, 'moon');
     const ctx = context(1);
-    assert.equal(game.getPublicView(game.createInitialState(ctx), ctx).prompt.art, undefined);
+    assert.ok(game.getPublicView(game.createInitialState(ctx), ctx).prompt.art);
   });
   it('plays six Mixed Trivia games before repeating any fact at a fixed difficulty', () => {
     assert.equal(new Set([...factDeck,...earthDeck,...wildlifeDeck].map(card=>card.id)).size,90);
@@ -204,7 +204,7 @@ describe('Estimate', () => {
     assert.ok(first.ok);
     assert.equal(first.state.phase, 'SUBMISSION');
     const publicView = game.getPublicView(first.state, ctx);
-    assert.deepEqual(Object.keys(publicView.prompt).sort(), ['question', 'unit']);
+    assert.deepEqual(Object.keys(publicView.prompt).sort(), ['art', 'question', 'unit']);
     assert.equal(publicView.latestResult, null);
     assert.deepEqual(publicView.history, []);
     assert.equal('submissions' in publicView, false);

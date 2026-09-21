@@ -1,16 +1,27 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import type { EstimateArtSubject } from '@nightshift/games-estimate';
+import { questionGlyph, questionLineColor } from './question-art-library';
+const sphereRadii: Partial<Record<EstimateArtSubject, number>> = {earth:47,moon:47,jupiter:49,saturn:40,sun:45,mercury:40,neptune:44};
 
 /** Decorative, schematic subjects: no counts, scales or answer-dependent geometry. */
 @Component({
   selector: 'ns-question-art', standalone: true,
   template: `
     <svg viewBox="0 0 240 150" fill="none" aria-hidden="true" focusable="false">
+      @if (glyph()) {
+        <ellipse cx="120" cy="136" rx="48" ry="4" fill="#9baeb4" opacity=".16"/>
+      } @else {
       <g class="stars" stroke="#dfd7ad" stroke-width="2" stroke-linecap="round">
         <path d="M32 43h8m-4-4v8M196 105h8m-4-4v8M185 26h6m-3-3v6"/>
         <circle cx="53" cy="112" r="1"/><circle cx="213" cy="62" r="1"/>
       </g>
-      <g class="subject" stroke="#302d39" stroke-width="2.5" stroke-linejoin="round">
+      }
+      <g class="subject" [attr.data-motion]="glyph()?.motion" stroke="#302d39" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+        @if (glyph(); as drawing) {
+          <path [attr.d]="drawing.shape" [attr.fill]="drawing.color"/>
+          @if (drawing.accent; as accent) { <path [attr.d]="accent[1]" [attr.fill]="accent[0]"/> }
+          <path [attr.d]="drawing.lines" [attr.stroke]="lineColor()"/>
+        } @else {
         @switch (subject()) {
           @case ('sun') {
             <g class="rays" stroke="#f6bf66" stroke-width="4" stroke-linecap="round">
@@ -69,6 +80,11 @@ import type { EstimateArtSubject } from '@nightshift/games-estimate';
             <path d="M98 61h19m12 28h17" stroke="#bddef7" stroke-width="3" stroke-linecap="round"/>
           }
         }
+        }
+        @if (measure()) {
+          <path [attr.d]="guidePath()" stroke="#302d39" stroke-width="6"/>
+          <path [attr.d]="guidePath()" stroke="#fff5d8" stroke-width="2.5"/>
+        }
       </g>
     </svg>
   `,
@@ -76,12 +92,28 @@ import type { EstimateArtSubject } from '@nightshift/games-estimate';
     :host{display:block;width:100%;height:100%;pointer-events:none}
     svg{display:block;width:100%;height:100%}
     .subject{transform-origin:120px 75px;animation:subject-arrive 1.1s ease-out both}
+    .subject[data-motion=float]{animation:float-arrive 1.4s ease-out both}
+    .subject[data-motion=roll]{animation:roll-arrive 1.2s ease-out both}
+    .subject[data-motion=sway]{animation:sway-arrive 1.4s ease-out both}
     .stars{animation:star-arrive 1.4s ease-out both}
     .rays{transform-origin:120px 75px;animation:sun-arrive 1.5s ease-out both}
     @keyframes subject-arrive{from{transform:translateY(5px) rotate(-4deg);opacity:.25}to{transform:none;opacity:1}}
     @keyframes star-arrive{from{opacity:0}to{opacity:.7}}
     @keyframes sun-arrive{from{transform:rotate(-12deg)}to{transform:none}}
-    @media(prefers-reduced-motion:reduce){.subject,.stars,.rays{animation:none}}
+    @keyframes float-arrive{0%{transform:translateY(8px);opacity:.25}60%{transform:translateY(-3px);opacity:1}100%{transform:none}}
+    @keyframes roll-arrive{from{transform:translateX(-8px) rotate(-9deg);opacity:.25}to{transform:none;opacity:1}}
+    @keyframes sway-arrive{0%{transform:rotate(-4deg);opacity:.25}55%{transform:rotate(3deg);opacity:1}100%{transform:none}}
+    @media(prefers-reduced-motion:reduce){.subject,.stars,.rays{animation:none!important}}
   `]
 })
-export class QuestionArtComponent { readonly subject = input.required<EstimateArtSubject>(); }
+export class QuestionArtComponent {
+  readonly subject = input.required<EstimateArtSubject>();
+  readonly measure = input<'radius' | 'diameter' | undefined>();
+  readonly guidePath = computed(() => {
+    const radius = sphereRadii[this.subject()] ?? 45;
+    const start = this.measure() === 'diameter' ? 120 - radius : 120;
+    return `M${start} 75H${120 + radius}M${start} 71V79M${120 + radius} 71V79`;
+  });
+  readonly glyph = computed(() => questionGlyph(this.subject()));
+  readonly lineColor = computed(() => questionLineColor(this.subject()));
+}
