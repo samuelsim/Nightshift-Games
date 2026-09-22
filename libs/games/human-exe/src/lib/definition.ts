@@ -1,21 +1,21 @@
 import { gameRounds } from '@nightshift/protocol';
 import type { GameDefinition, GameActionResult, GameContext } from '@nightshift/game-core';
-import type { PlayerAction } from '@nightshift/protocol';
+import type { PlayerAction, IllustrationSubject } from '@nightshift/protocol';
 import { humanExeMetadata } from './metadata';
 import { freshHand, shuffled } from '@nightshift/game-core';
 import { extraChallenges, type HumanChallenge } from './scenarios';
 
 type Challenge = HumanChallenge;
-const challenges: readonly Challenge[] = [
+export const challenges: readonly Challenge[] = [
   ...extraChallenges,
-  { question: 'A coworker spills their coffee. Your first response?', options: ['Offer a napkin and ask if they are okay', 'Calculate the volume lost', 'Announce a liquid containment failure'], human: 0, machine: 1, explanation: 'Our human directive values care. The machine directive values measurement.' },
-  { question: 'Pick a break-room welcome sign.', options: ['Occupancy limit: 8 units', 'Glad you made it. Put the kettle on.', 'Input calories here'], human: 1, machine: 0, explanation: 'A welcome offers warmth; a machine reports capacity.' },
-  { question: 'Your friend says their day was a disaster.', options: ['Request a timestamped incident log', 'Tell them to restart', 'Ask whether they want advice or just company'], human: 2, machine: 0, explanation: 'Listening comes before solving. The machine starts by collecting structured data.' },
-  { question: 'A plant on the desk is wilting. Leave a note.', options: ['Moisture level below operating threshold', 'I gave our leafy coworker a drink', 'Replace organic peripheral'], human: 1, machine: 0, explanation: 'Personality for the human; a measurable status report for the machine.' },
-  { question: 'Choose a birthday message.', options: ['Your age counter incremented successfully', 'Wishing you a day full of your favourite things', 'Warranty status unknown'], human: 1, machine: 0, explanation: 'A personal wish beats an age counter, unless you are following machine protocol.' },
-  { question: 'Someone brings homemade biscuits.', options: ['Ask for the production yield', 'Scan for manufacturing defects', 'Thank them for thinking of everyone'], human: 2, machine: 0, explanation: 'Recognise the gesture, or measure production if you received the machine directive.' },
-  { question: 'Name the team group chat.', options: ['The Midnight Snack Committee', 'Personnel Messaging Endpoint 04', 'Unread: 9,999'], human: 0, machine: 1, explanation: 'Shared humour feels human. A machine prefers an unambiguous system label.' },
-  { question: 'The shift is finally over. Say goodbye.', options: ['Session terminated', 'Get home safe. See you tomorrow!', 'Initiating horizontal mode'], human: 1, machine: 0, explanation: 'Care for the person, or report the session state.' }
+  { art:'mug', question: 'A coworker spills their coffee. Your first response?', options: ['Offer a napkin and ask if they are okay', 'Calculate the volume lost', 'Announce a liquid containment failure'], human: 0, machine: 1, explanation: 'Our human directive values care. The machine directive values measurement.' },
+  { art:'kettle', question: 'Pick a break-room welcome sign.', options: ['Occupancy limit: 8 units', 'Glad you made it. Put the kettle on.', 'Input calories here'], human: 1, machine: 0, explanation: 'A welcome offers warmth; a machine reports capacity.' },
+  { art:'speech', question: 'Your friend says their day was a disaster.', options: ['Request a timestamped incident log', 'Tell them to restart', 'Ask whether they want advice or just company'], human: 2, machine: 0, explanation: 'Listening comes before solving. The machine starts by collecting structured data.' },
+  { art:'garden', question: 'A plant on the desk is wilting. Leave a note.', options: ['Moisture level below operating threshold', 'I gave our leafy coworker a drink', 'Replace organic peripheral'], human: 1, machine: 0, explanation: 'Personality for the human; a measurable status report for the machine.' },
+  { art:'party', question: 'Choose a birthday message.', options: ['Your age counter incremented successfully', 'Wishing you a day full of your favourite things', 'Warranty status unknown'], human: 1, machine: 0, explanation: 'A personal wish beats an age counter, unless you are following machine protocol.' },
+  { art:'biscuit', question: 'Someone brings homemade biscuits.', options: ['Ask for the production yield', 'Scan for manufacturing defects', 'Thank them for thinking of everyone'], human: 2, machine: 0, explanation: 'Recognise the gesture, or measure production if you received the machine directive.' },
+  { art:'speech', question: 'Name the team group chat.', options: ['The Midnight Snack Committee', 'Personnel Messaging Endpoint 04', 'Unread: 9,999'], human: 0, machine: 1, explanation: 'Shared humour feels human. A machine prefers an unambiguous system label.' },
+  { art:'house', question: 'The shift is finally over. Say goodbye.', options: ['Session terminated', 'Get home safe. See you tomorrow!', 'Initiating horizontal mode'], human: 1, machine: 0, explanation: 'Care for the person, or report the session state.' }
 ];
 type Role = 'HUMAN' | 'MACHINE';
 interface HumanResult { readonly explanation: string; readonly humanAnswer: number; readonly machineAnswer: number;
@@ -29,7 +29,7 @@ export interface HumanState {
   readonly choices: Readonly<Record<string, number>>; readonly scores: Readonly<Record<string, number>>;
   readonly result: HumanResult | null;
 }
-export interface HumanPublicView { readonly difficulty?: string; readonly phase: HumanState['phase']; readonly round: number; readonly maxRounds: number;
+export interface HumanPublicView { readonly art?:IllustrationSubject; readonly difficulty?: string; readonly phase: HumanState['phase']; readonly round: number; readonly maxRounds: number;
   readonly soloPlayerId?: string | null; readonly timerEndsAt?: number; readonly soloResult?: HumanState['soloResult'];
   readonly question: string; readonly options: readonly string[]; readonly submittedPlayerIds: readonly string[];
   readonly scores: HumanState['scores']; readonly result: HumanResult | null; }
@@ -79,7 +79,7 @@ export const humanExeDefinition: GameDefinition<HumanState, PlayerAction, HumanP
   tick: (state, ctx) => ({ ok: true, state: maybeReveal(state, ctx) }),
   isFinished: state => state.phase === 'RESULTS',
   getPublicView(state) { const card = state.deck[state.round - 1]!;
-    return { difficulty:state.difficulty ?? 'standard', soloPlayerId:state.soloPlayerId??null,timerEndsAt:state.timerEndsAt??0,soloResult:state.soloResult??null,phase: state.phase, round: state.round, maxRounds: state.deck.length, question: card.question,
+    return { ...(card.art ? {art:card.art} : {}), difficulty:state.difficulty ?? 'standard', soloPlayerId:state.soloPlayerId??null,timerEndsAt:state.timerEndsAt??0,soloResult:state.soloResult??null,phase: state.phase, round: state.round, maxRounds: state.deck.length, question: card.question,
       options: card.options, submittedPlayerIds: Object.keys(state.choices), scores: state.scores, result: state.result }; },
   getPlayerView: (state, id) => ({ round: state.round, role: state.roles[id] ?? null, choice: state.choices[id] ?? null })
 };

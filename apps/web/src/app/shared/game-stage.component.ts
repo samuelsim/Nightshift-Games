@@ -3,6 +3,11 @@ import type { RoomView } from '@nightshift/protocol';
 import { GameArtComponent } from './game-art.component';
 import { QuestionArtComponent } from './question-art.component';
 import type { EstimatePublicView } from '@nightshift/games-estimate';
+import type { HumanPublicView } from '@nightshift/games-human-exe';
+import type { MajorityPublicView } from '@nightshift/games-majority-rules';
+import type { PickNumberPublicView } from '@nightshift/games-pick-number';
+import { PickArtComponent } from './pick-art.component';
+import { pickArtState } from './pick-art-state';
 
 const themes: Record<string,{label:string;caption:string}> = {
   'human-infiltrator':{label:'ANONYMOUS SIGNALS',caption:'Someone is trying very hard to sound human.'},
@@ -13,10 +18,19 @@ const themes: Record<string,{label:string;caption:string}> = {
   'majority-rules':{label:'THE ROOM HAS OPINIONS',caption:'Pick a side. Read the room.'},
   'one-of-us':{label:'THE SUSPICION CLUB',caption:'Everybody looks a little suspicious.'}
 };
-@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent,QuestionArtComponent],template:`
+@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent,QuestionArtComponent,PickArtComponent],template:`
   <div class="stage" [attr.data-scene]="id()" [class.revealed]="room().activeGame?.phase === 'REVEAL'">
     <div class="scene" aria-hidden="true">
-      @if (questionSubject(); as subject) {
+      @if (pickView(); as pick) {
+        <ns-pick-art [view]="pick" />
+      } @else if (majorityArt(); as pair) {
+        @for (key of artKeys(); track key) {
+          <div class="choice-scenes">
+            <div><span>A</span><ns-question-art [subject]="pair[0]" /></div>
+            <div><span>B</span><ns-question-art [subject]="pair[1]" /></div>
+          </div>
+        }
+      } @else if (questionSubject(); as subject) {
         @for (key of artKeys(); track key) { <ns-question-art [subject]="subject" [measure]="questionMeasure()" /> }
       } @else {
       <svg viewBox="0 0 600 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -76,6 +90,9 @@ const themes: Record<string,{label:string;caption:string}> = {
   </div>
 `,styles:[`
   :host{display:block;max-width:760px;margin:0 auto .5rem}
+  .choice-scenes{display:flex;width:min(100%,360px);height:100%;margin:auto;gap:16px}
+  .choice-scenes>div{position:relative;flex:1;min-width:0;height:100%}
+  .choice-scenes span{position:absolute;left:10px;top:12px;color:var(--muted);font-size:.7rem;font-weight:800}
   .stage{overflow:hidden;border:1px solid color-mix(in srgb,var(--game-accent) 35%,var(--line));border-radius:22px;background:radial-gradient(ellipse at 50% 45%,color-mix(in srgb,var(--game-accent) 17%,transparent),transparent 70%),#202020;box-shadow:0 7px 0 #0002}
   .scene{position:relative;height:90px;color:var(--game-accent)}svg{width:100%;height:100%;display:block}text{fill:currentColor;stroke:none;font:900 28px ui-monospace,monospace}[data-scene=human-exe] text{font-size:12px}
   ns-game-art{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:125px;filter:drop-shadow(0 7px 8px #0003)}
@@ -93,18 +110,28 @@ export class GameStageComponent {
   readonly room = input.required<RoomView>();
   readonly id = computed(()=>this.room().activeGame?.gameId ?? 'pick-number');
   readonly questionSubject = computed(() => {
+    if (this.id() === 'human-exe') {
+      const view = this.room().activeGame?.publicView as HumanPublicView | undefined;
+      return view?.phase === 'RESULTS' ? undefined : view?.art;
+    }
     if (this.id() !== 'estimate') return undefined;
     const view = this.room().activeGame?.publicView as EstimatePublicView | undefined;
     return view?.phase === 'RESULTS' ? undefined : view?.prompt?.art;
   });
   readonly artKeys = computed(() => {
-    const view = this.room().activeGame?.publicView as EstimatePublicView | undefined;
-    return [String(view?.round) + ':' + view?.prompt?.question];
+    const view = this.room().activeGame?.publicView as {round?:number;question?:string;prompt?:{question?:string}} | undefined;
+    return [this.id() + ':' + String(view?.round) + ':' + (view?.prompt?.question ?? view?.question)];
   });
+  readonly majorityArt = computed(() => {
+    if (this.id() !== 'majority-rules') return undefined;
+    const view = this.room().activeGame?.publicView as MajorityPublicView | undefined;
+    return view?.phase === 'RESULTS' ? undefined : view?.prompt?.art;
+  });
+  readonly pickView = computed(() => this.id() === 'pick-number' ? this.room().activeGame?.publicView as PickNumberPublicView : undefined);
   readonly questionMeasure = computed(() => this.id() === 'estimate'
     ? (this.room().activeGame?.publicView as EstimatePublicView | undefined)?.prompt?.artMeasure : undefined);
   readonly deck = computed(()=>(this.room().activeGame?.publicView as {deck?:string}|undefined)?.deck);
-  readonly theme = computed(()=>this.id()==='estimate' ? ({
+  readonly theme = computed(()=>this.pickView() ? {label:pickArtState(this.pickView()!).caption,caption:this.pickView()!.solo ? 'Read the hints. Follow the signal.' : 'Sealed guesses. One shared reveal.'} : this.id()==='estimate' ? ({
     earth:{label:'BLUE PLANET FIELD NOTES',caption:'From the surface to the deepest blue.'},
     mixed:{label:'THE CURIOSITY CABINET',caption:'One round in space. The next in the wild.'},
     wildlife:{label:'THE WILD GUESS',caption:'Big appetites. Small clues. Wild numbers.'},

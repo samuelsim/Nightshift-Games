@@ -18,9 +18,11 @@ Added 63 original drawings: eight wildlife species, six Earth/water subjects and
 
 Illustrations show subjects rather than the quantities needed to solve the question. Elephant trunk tips, bear teeth, spider legs, labelled Earth layers and measured ocean boundaries are not exposed. Related questions share subjects, so this is full content coverage rather than a different bespoke composition for every prompt. Four short entrance motions settle within 1.4 seconds and respect reduced motion. Illustrations occupy the existing stage with no added controls or panels.
 
-### 3 — Human.exe, Majority Rules, Pick a Number
+### 3 — Human.exe, Majority Rules, Pick a Number (implemented)
 
-Human.exe: scenario props with neutral expressions that cannot imply the correct response. Majority: balanced illustrations for both choices, with equal visual prominence. Pick: original solo radar and multiplayer draw states, and short lock/reveal/win reactions. Keep existing audio feedback and avoid multiple competing animations.
+Human.exe: explicit subject art for all 40 scenarios, independent of private roles, shuffled option positions and correct answers. Majority: explicit A/B subject pairs for all 50 prompts, identical layout dimensions and styling, and no animation or colour changes based on unrevealed votes. Abstract alternatives about the same object may deliberately share a drawing; text carries their distinction. See [the coverage audit](social-art-coverage.md).
+
+Pick: an original console with searching, higher/lower, sealed-guesses, reveal, solo-success and solo-miss states. The console consumes only the public view and displays `?` throughout submission. Multiplayer reveals stay neutral because the existing personal result card identifies each player's outcome. Entrance/hint motions are finite and respect reduced motion. No extra UI panels or audio triggers were added.
 
 ### 4 — Restricted Clues, One of Us, Infiltrator
 
@@ -32,7 +34,7 @@ Review all seven games, transitions and decks; long text, reconnect, late join, 
 
 ## Extension contract
 
-For now `EstimateArtSubject` is the small explicit subject vocabulary. Add a subject to that type, render it in `QuestionArtComponent`, and assign it in authored content. Public projection must continue excluding answers/explanations/sources until reveal. If future games share subjects, move the vocabulary to a browser-safe shared model; do not import server content into the browser. Use per-game lazy bundles if cumulative art exceeds the initial payload budget.
+`IllustrationSubject` in the protocol is now the shared, browser-safe vocabulary; `EstimateArtSubject` remains a compatibility alias. Add a subject to the vocabulary, render it in `QuestionArtComponent` or the path catalogue, and assign it in authored content. Public projection must continue excluding answers/explanations/sources until reveal. Do not import server content into the browser. Use per-game lazy bundles if cumulative art exceeds the initial payload budget.
 
 Everyday and wildlife drawings live in the typed `question-art-library.ts` path catalogue. Each renders a silhouette, optional accent and linework; linework outside a silhouette uses a pale stroke for dark-background contrast. Assign generated-template subjects directly at the template, wildlife subjects by their authored species, and Earth subjects in the explicit card-ID map. Coverage tests fail for unsupported or missing art. The optional public `artMeasure` field contains only `radius` or `diameter`, never the numeric measurement.
 
@@ -50,3 +52,11 @@ Everyday and wildlife drawings live in the typed `question-art-library.ts` path 
 - Reviewed all 63 new drawings in a temporary contact sheet; corrected pale-on-dark linework and sloth/bear detail. The review page was removed before the final build and is absent from production output.
 - Browser: Wildlife panda, Earth rotation/ocean pressure and Quantities robot/photo scenes render against their actual questions. Submission, timeout reveal and round transitions work. At 320 px the document has no horizontal overflow, the art remains 68 px tall, and a new subject uses only five SVG descendant elements. Entrance animation reports one iteration and settles at full opacity. No runtime errors in the fresh gameplay test tab.
 - Reduced-motion CSS includes an explicit override for every motion variant. Actual OS preference switching and low-end-device frame-time measurements remain part of iteration 5.
+
+## Iteration 3 verification — 2026-09-22
+
+- 42 new path drawings plus the Pick console. Visually reviewed all new subjects using an in-memory local contact sheet (no shipped gallery or assets).
+- Production build passes. Initial payload remains 513.47 kB raw / 145.86 kB estimated transfer. Lazy stage is 42.89 kB raw / 14.30 kB transfer, a 3.97 kB increase over iteration 2. No new dependencies or image requests. Existing initial-budget/CommonJS warnings remain.
+- All 133 tests passed; the six art tests and production build passed again after the final neutral multiplayer-reveal refinement. Coverage checks all Human scenarios and both sides of every Majority prompt, unchanged art under Human answer/role changes and Majority submissions, and secret-target exclusion during Pick submission.
+- Browser: Human language scenario uses speech art. Solo Pick displays the public lower hint with its target still hidden. Two-player Majority karaoke/golf art matches A/B options through a split reveal and scoring. At 320 px the art slots are both 127.5 × 68 px, with no horizontal overflow. Multiplayer Pick displays a lock and `?` after one submission, then the revealed target after both submit. No runtime errors in the fresh test tab.
+- Full OS reduced-motion and low-end-device frame timing remain in iteration 5. Game mechanics, timing, scoring, audio and card selection are unchanged.

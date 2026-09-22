@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import type { EstimateArtSubject } from '@nightshift/games-estimate';
+import type { IllustrationSubject as EstimateArtSubject } from '@nightshift/protocol';
 import { questionGlyph, questionLineColor } from './question-art-library';
 const sphereRadii: Partial<Record<EstimateArtSubject, number>> = {earth:47,moon:47,jupiter:49,saturn:40,sun:45,mercury:40,neptune:44};
 
