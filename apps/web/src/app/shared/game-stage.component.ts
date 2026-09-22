@@ -8,6 +8,8 @@ import type { MajorityPublicView } from '@nightshift/games-majority-rules';
 import type { PickNumberPublicView } from '@nightshift/games-pick-number';
 import { PickArtComponent } from './pick-art.component';
 import { pickArtState } from './pick-art-state';
+import { DeductionArtComponent } from './deduction-art.component';
+import { deductionArtState } from './deduction-art-state';
 
 const themes: Record<string,{label:string;caption:string}> = {
   'human-infiltrator':{label:'ANONYMOUS SIGNALS',caption:'Someone is trying very hard to sound human.'},
@@ -18,10 +20,12 @@ const themes: Record<string,{label:string;caption:string}> = {
   'majority-rules':{label:'THE ROOM HAS OPINIONS',caption:'Pick a side. Read the room.'},
   'one-of-us':{label:'THE SUSPICION CLUB',caption:'Everybody looks a little suspicious.'}
 };
-@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent,QuestionArtComponent,PickArtComponent],template:`
+@Component({selector:'ns-game-stage',standalone:true,imports:[GameArtComponent,QuestionArtComponent,PickArtComponent,DeductionArtComponent],template:`
   <div class="stage" [attr.data-scene]="id()" [class.revealed]="room().activeGame?.phase === 'REVEAL'">
     <div class="scene" aria-hidden="true">
-      @if (pickView(); as pick) {
+      @if (deductionArt(); as deduction) {
+        <ns-deduction-art [scene]="deduction" />
+      } @else if (pickView(); as pick) {
         <ns-pick-art [view]="pick" />
       } @else if (majorityArt(); as pair) {
         @for (key of artKeys(); track key) {
@@ -109,6 +113,7 @@ const themes: Record<string,{label:string;caption:string}> = {
 export class GameStageComponent {
   readonly room = input.required<RoomView>();
   readonly id = computed(()=>this.room().activeGame?.gameId ?? 'pick-number');
+  readonly deductionArt = computed(()=>deductionArtState(this.id(),this.room().activeGame?.publicView));
   readonly questionSubject = computed(() => {
     if (this.id() === 'human-exe') {
       const view = this.room().activeGame?.publicView as HumanPublicView | undefined;
@@ -131,10 +136,10 @@ export class GameStageComponent {
   readonly questionMeasure = computed(() => this.id() === 'estimate'
     ? (this.room().activeGame?.publicView as EstimatePublicView | undefined)?.prompt?.artMeasure : undefined);
   readonly deck = computed(()=>(this.room().activeGame?.publicView as {deck?:string}|undefined)?.deck);
-  readonly theme = computed(()=>this.pickView() ? {label:pickArtState(this.pickView()!).caption,caption:this.pickView()!.solo ? 'Read the hints. Follow the signal.' : 'Sealed guesses. One shared reveal.'} : this.id()==='estimate' ? ({
+  readonly theme = computed(()=>this.deductionArt() ?? (this.pickView() ? {label:pickArtState(this.pickView()!).caption,caption:this.pickView()!.solo ? 'Read the hints. Follow the signal.' : 'Sealed guesses. One shared reveal.'} : this.id()==='estimate' ? ({
     earth:{label:'BLUE PLANET FIELD NOTES',caption:'From the surface to the deepest blue.'},
     mixed:{label:'THE CURIOSITY CABINET',caption:'One round in space. The next in the wild.'},
     wildlife:{label:'THE WILD GUESS',caption:'Big appetites. Small clues. Wild numbers.'},
     facts:{label:'A LITTLE SPACE TO WONDER',caption:'Small guesses in a very big universe.'}
-  } as Record<string,{label:string;caption:string}>)[this.deck()??''] ?? themes['estimate'] : themes[this.id()]);
+  } as Record<string,{label:string;caption:string}>)[this.deck()??''] ?? themes['estimate'] : themes[this.id()]));
 }

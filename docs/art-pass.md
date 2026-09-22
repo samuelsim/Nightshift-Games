@@ -24,9 +24,11 @@ Human.exe: explicit subject art for all 40 scenarios, independent of private rol
 
 Pick: an original console with searching, higher/lower, sealed-guesses, reveal, solo-success and solo-miss states. The console consumes only the public view and displays `?` throughout submission. Multiplayer reveals stay neutral because the existing personal result card identifies each player's outcome. Entrance/hint motions are finite and respect reduced motion. No extra UI panels or audio triggers were added.
 
-### 4 — Restricted Clues, One of Us, Infiltrator
+### 4 — Restricted Clues, One of Us, Infiltrator (implemented)
 
-Public phase sprites for listening, clue collection, suspicion, voting and reveal. Never derive public art from secret words, hidden roles, codewords or private directives. Word-specific reveal art only after public disclosure. Test two-player views with opposing roles.
+Three original phase-driven SVG scenes replace the fallback mascot/props. Restricted Clues uses a rotating vault dial and a door that opens at reveal. One of Us uses sealed envelopes, a connected clue board, an inspecting lens and a ballot box. Infiltrator uses a signal terminal, equal anonymous response cards, a radar sweep and a revealed machine identity. Public outcomes receive caught, escaped or void badges; the existing personal result card explains each player's score.
+
+All artwork is derived from public phase and, only at reveal, the public outcome. Neither secret words nor roles, response text, authors, votes or codewords enter the drawing. Word-specific reveal drawings are not part of this iteration: the vault's paper and detective's notes remain generic, and the revealed word stays in the existing text. Motions finish within 1.2 seconds, re-enter only on round/phase/outcome changes, and have explicit reduced-motion end states. The scene preserves the existing 90 px / 68 px footprint. No gameplay or audio changes.
 
 ### 5 — Integration and visual QA
 
@@ -60,3 +62,11 @@ Everyday and wildlife drawings live in the typed `question-art-library.ts` path 
 - All 133 tests passed; the six art tests and production build passed again after the final neutral multiplayer-reveal refinement. Coverage checks all Human scenarios and both sides of every Majority prompt, unchanged art under Human answer/role changes and Majority submissions, and secret-target exclusion during Pick submission.
 - Browser: Human language scenario uses speech art. Solo Pick displays the public lower hint with its target still hidden. Two-player Majority karaoke/golf art matches A/B options through a split reveal and scoring. At 320 px the art slots are both 127.5 × 68 px, with no horizontal overflow. Multiplayer Pick displays a lock and `?` after one submission, then the revealed target after both submit. No runtime errors in the fresh test tab.
 - Full OS reduced-motion and low-end-device frame timing remain in iteration 5. Game mechanics, timing, scoring, audio and card selection are unchanged.
+
+## Iteration 4 verification — 2026-09-22
+
+- Production build and all 135 tests pass. Secret-swapping checks cover opposing private roles, words, codewords and unpublished votes; reveal tests cover caught, escaped, void and results states plus new-round reset.
+- Initial payload remains 513.47 kB raw / 145.86 kB estimated transfer. Lazy stage is 53.71 kB raw / 16.79 kB transfer, an increase of 2.49 kB compressed. No dependencies or asset downloads added. Existing initial-budget/CommonJS warnings remain.
+- Browser: two-player Restricted Clues giver/guesser views share the sealed vault, which opens at correct reveal. Three-player One of Us informed/bluffer views share the clue board through collection, discussion, voting and caught reveal. Three-player Infiltrator human/machine views share the terminal, anonymous cards and voting radar; correct votes reveal the machine, and the next round resets to transmission art. No errors in the host browser console.
+- At a 320 px viewport, the One of Us stage remains 68 px tall and document/client widths both measure 305 px (no horizontal overflow). Mobile ballot and desktop vault/terminal illustrations visually reviewed. Viewport override reset afterward.
+- Actual OS reduced-motion preference switching and low-end frame-time measurements remain in iteration 5. CSS includes reduced-motion overrides and preserves the opened vault state without animation.
