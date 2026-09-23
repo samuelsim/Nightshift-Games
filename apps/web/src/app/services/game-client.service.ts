@@ -46,14 +46,23 @@ export class GameClientService {
     this.attachRoom(room);
   }
 
-  async reconnectFromSession(): Promise<boolean> {
+  async reconnectFromSession(expectedRoomId: string): Promise<boolean> {
     // Routing from create/join already has a live connection. Reconnect is only
     // needed after a reload or a lost connection, not on every room-page entry.
-    if (this.room && this.connectionStatus() === 'connected') return true;
+    if (this.room && this.connectionStatus() === 'connected') {
+      if (this.room.roomId === expectedRoomId) return true;
+      const previous = this.room;
+      this.room = null;
+      this.roomView.set(null);
+      this.privateView.set(null);
+      this.playerId.set(null);
+      this.connectionStatus.set('idle');
+      await previous.leave();
+    }
 
     const token = sessionStorage.getItem(reconnectionStorageKey);
 
-    if (!token) {
+    if (!token || token.split(':')[0] !== expectedRoomId) {
       return false;
     }
 
@@ -114,19 +123,22 @@ export class GameClientService {
 
   private attachRoom(room: Room<NightshiftRoomState>): void {
     this.roomView.set(null);
+    this.privateView.set(null);
     this.room = room;
     this.playerId.set(room.sessionId);
     this.connectionStatus.set('connected');
     this.persistReconnectionToken(room);
     this.updateRoomView(room.state);
 
-    room.onStateChange((state) => this.updateRoomView(state));
-    room.onMessage('serverMessage', (message: ServerMessage) => this.handleServerMessage(message));
+    room.onStateChange((state) => { if (this.room === room) this.updateRoomView(state); });
+    room.onMessage('serverMessage', (message: ServerMessage) => { if (this.room === room) this.handleServerMessage(message); });
     room.onLeave(() => {
+      if (this.room !== room) return;
       this.connectionStatus.set('disconnected');
       this.feedback.show({cue:'error',text:'Connection lost · Refresh to reconnect'});
     });
     room.onError((_code, message) => {
+      if (this.room !== room) return;
       this.lastError.set(message ?? 'The room connection hit an error.');
     });
   }

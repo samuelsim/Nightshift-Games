@@ -30,9 +30,11 @@ Three original phase-driven SVG scenes replace the fallback mascot/props. Restri
 
 All artwork is derived from public phase and, only at reveal, the public outcome. Neither secret words nor roles, response text, authors, votes or codewords enter the drawing. Word-specific reveal drawings are not part of this iteration: the vault's paper and detective's notes remain generic, and the revealed word stays in the existing text. Motions finish within 1.2 seconds, re-enter only on round/phase/outcome changes, and have explicit reduced-motion end states. The scene preserves the existing 90 px / 68 px footprint. No gameplay or audio changes.
 
-### 5 — Integration and visual QA
+### 5 — Integration and visual QA (implemented; device measurements outstanding)
 
 Review all seven games, transitions and decks; long text, reconnect, late join, spectators, reduced motion and mobile. Record compressed bundle growth, DOM complexity and absence of added asset requests. Compare question-to-art coverage against source content; do not claim full bespoke question coverage until the audit is complete.
+
+The integration audit corrected Pick's full-viewport panels and oversized number tiles, host-label overlap with the help button on small screens, room links restoring a different room's session, and missing persistent errors on the join form. Pick instructions now defer to the actual clock rather than hard-code a duration. Four Majority subjects replace inappropriate handshake/music illustrations: salute, finger guns, applause and silent dance. Generic subject sharing elsewhere remains intentional; this is not a bespoke image for each permutation.
 
 ## Extension contract
 
@@ -70,3 +72,13 @@ Everyday and wildlife drawings live in the typed `question-art-library.ts` path 
 - Browser: two-player Restricted Clues giver/guesser views share the sealed vault, which opens at correct reveal. Three-player One of Us informed/bluffer views share the clue board through collection, discussion, voting and caught reveal. Three-player Infiltrator human/machine views share the terminal, anonymous cards and voting radar; correct votes reveal the machine, and the next round resets to transmission art. No errors in the host browser console.
 - At a 320 px viewport, the One of Us stage remains 68 px tall and document/client widths both measure 305 px (no horizontal overflow). Mobile ballot and desktop vault/terminal illustrations visually reviewed. Viewport override reset afterward.
 - Actual OS reduced-motion preference switching and low-end frame-time measurements remain in iteration 5. CSS includes reduced-motion overrides and preserves the opened vault state without animation.
+
+## Iteration 5 verification — 2026-09-23
+
+- All 135 tests pass after the final changes, including transport-level multiplayer/reconnection tests and explicit mapping regressions for the corrected Majority illustrations. The room-link client fix was verified separately in the browser.
+- Production build passes; initial bundle 513.77 kB raw / 145.96 kB estimated transfer (+0.10 kB compressed versus iteration 4, from room recovery guards). Lazy game-stage 54.73 kB raw / 17.25 kB transfer (+0.46 kB); Pick 10.74 / 3.29 kB. Existing initial-budget and CommonJS warnings remain. No new dependencies, image URLs, bitmap downloads or runtime animation libraries.
+- All seven game layouts reviewed at 320 px using real rooms. Sampled client/scroll widths both 305 px; stage remains 68 px tall. SVG descendants in sampled scenes: Estimate 5, Human 5, Majority 10, Pick 9, Restricted Clues 12, One of Us 9, Infiltrator 7. These are DOM complexity counts, not frame-rate benchmarks. Majority A/B slots remain equal at 127.5 × 68 px.
+- Pick desktop/mobile submission and timeout reveal reviewed; number tiles no longer grow to desktop-width squares. Long nickname wraps without colliding with help. Estimate two-player exact/near reveal and long nickname, Human solo late-join spectator, all three deduction submission stages, and Infiltrator help open/Escape close verified. Earlier iteration 3/4 reveal and voting checks remain applicable; this pass changes no scoring/timing/role rules.
+- Same-room refresh restores the player and round. Navigating that tab to a different existing room stays on the requested join screen and joins correctly, instead of reconnecting to the old room. Stale callbacks from a departed room are ignored and private view resets on attachment. Missing-room errors now remain on the join form instead of relying only on a disappearing toast.
+- Source review confirms global reduced-motion animation/transition suppression, subject-specific overrides, and explicit static open-vault/lower-arrow end states. Decorative stage animations finish within 1.5 s; Pick's redundant endless radar pulse is now finite. Urgent timer motion remains functional feedback and is also disabled by reduced motion.
+- **Validation limitation:** the available browser controller has viewport inspection but no OS motion-preference or CPU-throttling controls. Actual preference switching, physical low-end frame timing and a full low-end-device run are unmeasured. Do not present those checks as passed. No universal no-loading-impact or frame-rate guarantee is claimed.

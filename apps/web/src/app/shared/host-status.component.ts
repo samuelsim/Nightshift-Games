@@ -11,7 +11,7 @@ import { useClock } from './clock';
       </aside>
     } @else { <p class="host-label">Host: <b>{{ host.nickname }}</b></p> }
   }
-`,styles:[`:host{display:block}aside{display:grid;gap:.4rem;border:1px solid var(--gold);border-radius:12px;padding:1rem;background:var(--surface)}aside span,small,.host-label{color:var(--muted);font-size:.8rem}.host-label{margin:.5rem 0}b{color:var(--text)}`]})
+`,styles:[`:host{display:block}aside{display:grid;gap:.4rem;border:1px solid var(--gold);border-radius:12px;padding:1rem;background:var(--surface);overflow-wrap:anywhere}aside span,small,.host-label{color:var(--muted);font-size:.8rem}.host-label{margin:.5rem 0;overflow-wrap:anywhere}b{color:var(--text)}@media(max-width:600px){.host-label{padding-right:130px;min-height:44px}aside{margin-top:3rem}}`]})
 export class HostStatusComponent {
   readonly room = input.required<RoomView>();
   private readonly now = useClock();

@@ -75,18 +75,18 @@ All current scenarios have explicit assignments. Art repeats where both options 
 | Your shift gets a mascot. | owl | potato |
 | Choose a tiny workplace luxury. | chair | biscuit |
 | Your alarm must use one sound forever. | duck | speech |
-| Replace the office doorbell. | music | handshake |
+| Replace the office doorbell. | music | applause |
 | Pick a useless superpower. | bread | sock |
 | Your coffee machine becomes sentient. | speech | speech |
 | Choose a team uniform accessory. | cape | shoe |
 | Upgrade your commute. | traffic | chair |
 | A robot does one chore for you. | laundry | dishes |
-| Choose a meeting replacement. | speech | music |
+| Choose a meeting replacement. | speech | dance |
 | Pick a desk companion. | dragon | snail |
 | You win one vending-machine privilege. | cup | biscuit |
 | Pick a strange weather forecast. | ice | biscuit |
 | Your lunchbox can do one trick. | rice | rice |
-| Choose a new team greeting. | handshake | handshake |
+| Choose a new team greeting. | salute | finger-guns |
 | You get a personal soundtrack. | cinema | music |
 | Every lift ride includes entertainment. | book | speech |
 | Pick a room with a view. | mountain | ocean |

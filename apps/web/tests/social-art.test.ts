@@ -60,6 +60,9 @@ it('covers all Human scenarios and both sides of all Majority prompts', () => {
   }
   assert.equal(challenges.find(c=>c.question.includes('childhood toy'))?.art,'toy');
   assert.deepEqual(majorityPrompts.find(c=>c.question.includes('desk companion'))?.art,['dragon','snail']);
+  assert.deepEqual(majorityPrompts.find(c=>c.question.includes('team greeting'))?.art,['salute','finger-guns']);
+  assert.deepEqual(majorityPrompts.find(c=>c.question.includes('meeting replacement'))?.art,['speech','dance']);
+  assert.deepEqual(majorityPrompts.find(c=>c.question.includes('office doorbell'))?.art,['music','applause']);
 });
 it('does not let Human answer shuffling or roles control public art', () => {
   const state=humanExeDefinition.createInitialState(ctx);

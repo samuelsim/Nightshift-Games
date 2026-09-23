@@ -37,13 +37,14 @@ import { Check, Copy, LogIn, Play, RotateCcw, Users, LucideAngularModule } from 
           <h1>Join {{ routeCode() }}</h1>
           <label>
             Nickname
-            <input [(ngModel)]="nickname" maxlength="24" autocomplete="nickname" placeholder="Alice" />
+            <input [(ngModel)]="nickname" maxlength="24" autocomplete="nickname" placeholder="Night Owl" />
           </label>
           <ns-avatar-picker [selectedAvatarId]="avatarId()" (selected)="avatarId.set($event)" />
           <button type="button" class="primary" [disabled]="busy()" (click)="join()">
             <lucide-icon [img]="LogIn" aria-hidden="true" />
             <span>Join Room</span>
           </button>
+          @if (client.lastError()) { <p class="error" role="alert">{{ client.lastError() }}</p> }
         </section>
       } @else {
         @defer (on immediate) { <ns-game-help [gameId]="room()?.activeGame?.gameId || room()?.selectedGameId || 'pick-number'" [solo]="soloMode()" /> }
@@ -437,7 +438,7 @@ export class RoomPageComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    await this.client.reconnectFromSession();
+    await this.client.reconnectFromSession(this.routeCode());
     await this.updateQr();
   }
 

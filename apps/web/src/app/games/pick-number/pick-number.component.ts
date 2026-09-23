@@ -30,7 +30,7 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
         <section class="prompt">
           <h2>{{ view.solo ? 'Solo · Hunt the hidden number' : 'Choose from 1 to 10' }}</h2>
           @if (view.solo) {
-            <p>Three guesses. Twenty seconds. Find the number from 1–10: 100 points on your first guess, 60 on your second, 30 on your third.</p>
+            <p>Find 1–10 in three guesses. Score 100, 60 or 30 points. Beat the clock!</p>
             @if (view.solo.playerId !== playerId()) { <p>You join next round. Watch the hunt!</p> }
             <div class="hunt-lives" aria-label="Remaining guesses">@for (life of [0,1,2]; track life) { <span [class.spent]="life < view.solo.attempts.length" aria-hidden="true">◆</span> }<small>{{ 3-view.solo.attempts.length }} chances to crack it</small></div>
             <div class="hunt-trail" aria-live="polite">@for (attempt of view.solo.attempts; track attempt.value) { <span class="hint-ticket"><b>{{ attempt.value }}</b><i aria-hidden="true">{{ attempt.hint === 'Go higher' ? '↑' : '↓' }}</i>{{ attempt.hint }}</span> }</div>
@@ -100,12 +100,15 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
   styles: [
     `
       .hunt-radar {display:grid;grid-template-columns:32px 1fr;gap:.2rem .6rem;align-items:center;padding:.65rem .8rem;margin:.6rem 0;border:1px solid var(--gold);border-radius:10px;background:#ffd66b0a}
-      .hunt-radar>span {grid-row:1/3;color:var(--gold);font-size:2rem;animation:radar-pulse 1.8s ease-in-out infinite}
+      .hunt-radar>span {grid-row:1/3;color:var(--gold);font-size:2rem;animation:radar-pulse 1.2s ease-in-out}
       .hunt-radar strong {font-size:.9rem;color:var(--gold)}.hunt-radar small{font-size:.75rem;color:var(--muted)}
+      .hunt-trail:empty{display:none}
       .number-grid button.ruled-out {opacity:.4;text-decoration:line-through;filter:grayscale(1);transform:scale(.94);transition:opacity .25s,transform .25s}
       @keyframes radar-pulse {50%{opacity:.45;transform:scale(.9)}}
       @media(prefers-reduced-motion:reduce){.hunt-radar>span{animation:none}.number-grid button.ruled-out{transition:none}}
       .game {
+        width: min(100%, 760px);
+        margin: auto;
         display: grid;
         gap: 1rem;
       }
@@ -146,14 +149,17 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
       .scores {
         display: grid;
         gap: 1rem;
-        min-height: calc(100dvh - 160px);
-        align-content: center;
+        align-content: start;
+        padding: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface);
       }
 
       .number-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(48px, 1fr));
-        gap: 0.65rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.4rem;
       }
 
       button {
@@ -172,8 +178,8 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
       }
 
       .number-grid button {
-        aspect-ratio: 1;
-        min-height: 0;
+        min-height: 48px;
+        padding: .5rem 0;
         color: #141414;
         background: var(--gold);
         border-color: var(--gold);
@@ -242,6 +248,7 @@ import { RotateCcw, Send, Trophy, LucideAngularModule } from 'lucide-angular';
         width: 21px;
         height: 21px;
       }
+      @media(max-width:480px){.prompt,.reveal,.scores{padding:.75rem;gap:.65rem}.hunt-radar{margin:0}.hunt-trail:empty{display:none}}
     `
   ]
 })
